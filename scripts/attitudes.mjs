@@ -590,8 +590,8 @@ Hooks.once("init", () => {
   });
   game.settings.register(MOD, "castFlagScopes", {
     name: "Cast flag scopes",
-    hint: "Comma-separated module ids. An actor with flags.<id>.cast set counts as Cast for the Cast filter.",
-    scope: "world", config: true, type: String, default: "scarlet-dawn-gm",
+    hint: "Comma-separated module ids. An actor with flags.<id>.cast set counts as Cast for the Cast filter. Empty: the Cast chip shows no one.",
+    scope: "world", config: true, type: String, default: "",
   });
 });
 
