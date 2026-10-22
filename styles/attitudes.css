@@ -1,0 +1,77 @@
+/* PF2e NPC Attitudes. Scoped under .npa-app, with resets for modules that ship unscoped rules. */
+
+.application.npa-app .window-content { padding: 0; display: flex; flex-direction: column; overflow: hidden; }
+.npa-app .npa { display: flex; flex-direction: column; height: 100%; min-height: 0; font-size: 13px; }
+.npa-app .npa a { cursor: pointer; text-decoration: none; text-transform: none; flex: 0 0 auto; }
+.npa-app .npa i { position: static; display: inline-block; width: auto; }
+.npa-app .npa span, .npa-app .npa strong { overflow: visible; text-overflow: clip; white-space: normal; flex: initial; }
+.npa-app .npa label { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font-size: 12px; }
+
+.npa-app .npa-head { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--color-border, #7a7971); }
+.npa-app .npa-head input[type="search"] { width: 200px; flex: 0 0 auto; }
+.npa-app .npa-filters { display: flex; flex-wrap: wrap; gap: 4px; }
+.npa-app .npa .npa-filters a { padding: 2px 8px; border-radius: 10px; border: 1px solid rgba(127, 127, 127, 0.35); opacity: 0.8; }
+.npa-app .npa .npa-filters a.active { opacity: 1; font-weight: 600; background: rgba(255, 255, 255, 0.1); }
+.npa-app .npa-gm { display: flex; gap: 12px; align-items: center; margin-left: auto; }
+.npa-app .npa-gm button { width: auto; flex: 0 0 auto; padding: 0 8px; line-height: 26px; }
+
+.npa-app .npa-body { flex: 1; min-height: 0; overflow: auto; padding: 10px 12px 16px; }
+.npa-app .npa-empty { opacity: 0.7; font-style: italic; }
+.npa-app .npa-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 10px; }
+
+.npa-app .npa-card { --att: #8a8a8a; display: flex; gap: 10px; padding: 8px; border: 1px solid rgba(127, 127, 127, 0.35); border-left: 4px solid var(--att); border-radius: 6px; }
+.npa-app .npa-card.att-hostile { --att: #b33a3a; }
+.npa-app .npa-card.att-unfriendly { --att: #c06a2b; }
+.npa-app .npa-card.att-indifferent { --att: #8a8a8a; }
+.npa-app .npa-card.att-friendly { --att: #4f8a4b; }
+.npa-app .npa-card.att-helpful { --att: #3f7fa8; }
+.npa-app .npa-card.att-unknown { --att: rgba(127, 127, 127, 0.35); }
+.npa-app .npa-card.npa-unmet { opacity: 0.6; border-style: dashed; }
+.npa-app .npa-card > img { width: 96px; height: 120px; object-fit: cover; object-position: top; border-radius: 4px; border: none; flex: 0 0 96px; cursor: default; }
+.npa-app .npa-card > img[data-action] { cursor: pointer; }
+.npa-app .npa-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+.npa-app .npa-main h3 { margin: 0; font-size: 15px; border: none; line-height: 1.2; }
+.npa-app .npa .npa-real { font-size: 11px; font-weight: normal; opacity: 0.6; font-style: italic; }
+.npa-app .npa-att { font-weight: 600; color: color-mix(in srgb, var(--att) 70%, white); }
+.theme-light .npa-app .npa-att, .npa-app.theme-light .npa-att { color: color-mix(in srgb, var(--att) 80%, black); }
+.npa-app .npa-att.npa-shown { font-weight: normal; font-size: 12px; color: inherit; opacity: 0.8; }
+.npa-app .npa-blurb { margin: 0; opacity: 0.85; font-style: italic; }
+.npa-app .npa-row { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.npa-app .npa-main input[type="text"] { width: 100%; }
+.npa-app .npa .npa-notes { display: flex; flex-direction: column; align-items: stretch; gap: 2px; white-space: normal; }
+.npa-app .npa .npa-notes > span { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.7; }
+.npa-app .npa .npa-note-list { margin: 0; padding: 0; list-style: none; font-size: 12px; }
+.npa-app .npa .npa-note-list li { padding: 2px 0; border-bottom: 1px dotted rgba(127, 127, 127, 0.3); }
+.npa-app .npa .npa-note-list li:last-child { border-bottom: none; }
+.npa-app .npa .npa-note-list strong { opacity: 0.8; margin-right: 4px; }
+.npa-app .npa .npa-note-list a { opacity: 0.5; margin-left: 4px; }
+.npa-app .npa .npa-note-list a:hover { opacity: 1; }
+.npa-app .npa-note-add { display: flex; gap: 4px; }
+.npa-app .npa-note-add input { flex: 1; min-width: 0; font-size: 12px; }
+.npa-app .npa-note-add button { width: auto; flex: 0 0 auto; padding: 0 8px; }
+
+/* GM only: the name and portrait players see, and the Announce button */
+.npa-app .npa-row button { width: auto; flex: 0 0 auto; padding: 0 8px; line-height: 24px; font-size: 12px; }
+.npa-app .npa-ident label { flex: 1 1 45%; min-width: 0; }
+.npa-app .npa-ident input[type="text"] { flex: 1; min-width: 0; }
+.npa-app .npa .npa-ident a { padding: 0 4px; }
+
+.npa-chat i { opacity: 0.8; margin-right: 4px; }
+
+/* Attitudes toward particular characters */
+.npa-app .npa-pcs { display: flex; flex-wrap: wrap; gap: 4px; }
+.npa-app .npa .npa-pc { --att: #8a8a8a; font-size: 11px; padding: 1px 8px; border-radius: 10px; border: 1px solid var(--att); white-space: nowrap; color: color-mix(in srgb, var(--att) 70%, white); }
+.npa-app .npa-pc.att-hostile { --att: #b33a3a; }
+.npa-app .npa-pc.att-unfriendly { --att: #c06a2b; }
+.npa-app .npa-pc.att-indifferent { --att: #8a8a8a; }
+.npa-app .npa-pc.att-friendly { --att: #4f8a4b; }
+.npa-app .npa-pc.att-helpful { --att: #3f7fa8; }
+.theme-light .npa-app .npa .npa-pc, .npa-app.theme-light .npa .npa-pc { color: color-mix(in srgb, var(--att) 80%, black); }
+.npa-app .npa-per summary { cursor: pointer; font-size: 12px; opacity: 0.85; }
+.npa-app .npa .npa-per summary span { opacity: 0.8; font-style: italic; }
+.npa-app .npa-per-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 4px 10px; padding: 4px 0 2px; }
+.npa-app .npa-per-grid label { justify-content: space-between; }
+.npa-app .npa-per-grid select { max-width: 110px; }
+
+/* Placeholder text: some UI themes draw it dark grey on the brown field, which can't be read. */
+.npa-app textarea::placeholder, .npa-app input::placeholder { color: currentColor; opacity: 0.55; font-style: italic; }
