@@ -40,7 +40,7 @@ Token controls on the left: the address-book icon at the bottom of the list. Mac
 - **Chips**: "Met only" hides NPCs the party hasn't met; "Cast" shows only actors your campaign module marks as Cast: list that module's id in the "Cast flag scopes" setting (empty by default), and any actor with `flags.<id>.cast` set counts. Both are remembered in this browser.
 - Attitude is the NPC's real attitude. "Players see" is what the party is shown: the same, a different attitude (someone hiding how they feel), or Unknown. The GM sees both.
 - Setting Hostile when the NPC has tokens on the current scene that aren't Hostile asks whether to set those tokens' disposition to Hostile; Friendly or Helpful asks the same for Friendly. Nothing changes unless you say yes.
-- "Toward each character" sets how the NPC feels about one character in particular, when it differs from their general attitude: Unfriendly to Valeros but Helpful to Kyra. Leave a character on "As above" to use the general attitude. Players see these as small tags under the attitude, but only while "Players see" is "The same"; an NPC hiding how they feel shows the players nothing about individual characters either.
+- "Toward each character" sets how the NPC feels about one character in particular, when it differs from their general attitude: Unfriendly to Vance but Helpful to Kestrel. Leave a character on "As above" to use the general attitude. Players see these as small tags under the attitude, but only while "Players see" is "The same"; an NPC hiding how they feel shows the players nothing about individual characters either.
 - The one-line description is shown to players. Use it for who they are and where the party met them.
 - Click a portrait to open the NPC's sheet.
 
@@ -82,6 +82,6 @@ Open an [issue](https://github.com/Sir-Bayard/pf2e-npc-attitudes/issues).
 
 [MIT](LICENSE). Copyright (c) 2026 Sir Bayard.
 
-## Paizo Community Use
+## Pathfinder
 
-PF2e NPC Attitudes uses trademarks and/or copyrights owned by Paizo Inc., used under Paizo's Community Use Policy ([paizo.com/licenses/communityuse](https://paizo.com/licenses/communityuse)). We are expressly prohibited from charging you to use or access this content. PF2e NPC Attitudes is not published, endorsed, or specifically approved by Paizo. For more information about Paizo Inc. and Paizo products, visit [paizo.com](https://paizo.com).
+PF2e NPC Attitudes is an unofficial, free module for the Pathfinder Second Edition system on Foundry VTT. It is not published, endorsed or specifically approved by Paizo Inc. Pathfinder is a trademark of Paizo Inc., used here only to say which game the module works with. The module follows the game's rules, which Paizo publishes under the ORC License, and refers to them by name; it doesn't reproduce Paizo's rules text, art or setting material.
