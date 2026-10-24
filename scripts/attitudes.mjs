@@ -129,8 +129,12 @@ function playerImg(actor, r = record(actor)) {
   return actor.prototypeToken?.texture?.src || img;
 }
 
+/**
+ * An NPC actor no player owns, or one that already has a record here: an NPC the GM lends a player for a fight
+ * (owner permission) keeps its card. Player-owned summons and companions with no record stay out of the list.
+ */
 function isNPC(actor) {
-  return actor?.type === "npc" && !actor.hasPlayerOwner;
+  return actor?.type === "npc" && (!actor.hasPlayerOwner || !!actor.flags?.[MOD]?.npc);
 }
 
 /** Cast: an actor with flags.<scope>.cast for one of the scopes in the castFlagScopes setting. */

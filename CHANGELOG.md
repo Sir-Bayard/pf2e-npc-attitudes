@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.5
+
+- An NPC with a record here that the GM lends to a player (owner permission, say for a fight) stays in the People window with its attitude and notes. It used to drop out of the list until the permission was taken back. Player-owned NPCs with no record (summons, companions) still stay out.
+
 ## 0.2.4
 
 - "Cast flag scopes" is empty by default, so the Cast chip does nothing until you name the module that marks your cast. A world that already had a value keeps it.
