@@ -46,7 +46,7 @@ Token controls on the left: the address-book icon at the bottom of the list. Mac
 
 ## Names and portraits
 
-Players see the "Known as" name; when it is empty, the actor's prototype token name. The actor's own name is shown to the GM only, in small grey type beside it. Players see the "Portrait" image; when it is empty, the prototype token image, and failing that the actor image. Pick one with the image button or type a path. The image's alt text is the known name, so a file named after the real person doesn't show up as a tooltip.
+Players see the "Known as" name; when it is empty, the actor's prototype token name. The actor's own name is shown to the GM only, in small gray type beside it. Players see the "Portrait" image; when it is empty, the prototype token image, and failing that the actor image. Pick one with the image button or type a path. The image's alt text is the known name, so a file named after the real person doesn't show up as a tooltip.
 
 Macros: `api.setKnownAs(actor, "Brother Anselm")` sets the name players see; `api.reveal(actor)` sets it to the actor's real name.
 

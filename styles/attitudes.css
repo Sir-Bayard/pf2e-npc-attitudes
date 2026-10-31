@@ -73,5 +73,5 @@
 .npa-app .npa-per-grid label { justify-content: space-between; }
 .npa-app .npa-per-grid select { max-width: 110px; }
 
-/* Placeholder text: some UI themes draw it dark grey on the brown field, which can't be read. */
+/* Placeholder text: some UI themes draw it dark gray on the brown field, which can't be read. */
 .npa-app textarea::placeholder, .npa-app input::placeholder { color: currentColor; opacity: 0.55; font-style: italic; }
