@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0
+
+- The People window remembers its size and place, in each browser.
+- Restoring a window from minimized brings it back at its full size; on Foundry 14.370 it came back as a thin strip.
+- Verified on Foundry 14.370.
+
 ## 0.2.5
 
 - An NPC with a record here that the GM lends to a player (owner permission, say for a fight) stays in the People window with its attitude and notes. It used to drop out of the list until the permission was taken back. Player-owned NPCs with no record (summons, companions) still stay out.

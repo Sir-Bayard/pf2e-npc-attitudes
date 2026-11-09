@@ -34,6 +34,8 @@ Tracks how the people the party has met feel about them, using GM Core's attitud
 
 Token controls on the left: the address-book icon at the bottom of the list. Macro: `game.modules.get("pf2e-npc-attitudes").api.open()`
 
+The window remembers its size and place, in each browser.
+
 ## For the GM
 
 - **Mark people as met**: select their tokens and click "Mark selected tokens as met", or right-click an NPC in the Actors sidebar and choose "People: met / not met", or turn off the "Met only" chip in the window and tick Met on a card. Marking from a token whose name differs from the prototype token name fills in "Known as" with the token's name.
