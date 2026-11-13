@@ -6,11 +6,11 @@ Tracks how the people the party has met feel about them. The GM sets each NPC's 
 
 ![GM view](docs/images/gm-view.png)
 
-**The GM's view.** Each NPC's real attitude and what the players are shown: Captain Rhine is Unfriendly but plays Friendly, and the ferrywoman's name and mood are still unknown. Attitudes toward one character, a public one-line description, and the party's notes.
+**The GM's view of one group.** Groups down the side, with Rename, Archive all and Remove group for the one you're in. Each card holds the NPC's real attitude and what the players are shown: Captain Rhine is Unfriendly but plays Friendly, and the ferrywoman's name and mood are still unknown.
 
 ![Player view](docs/images/player-view.png)
 
-**The players' People window.** Portraits, the names the party knows, the attitudes they've been shown, and notes the whole party can add to.
+**The players' People window.** The same groups, the names the party knows, the attitudes they've been shown, and notes the whole party can add to. NPCs the GM has archived wait under Archived.
 
 ## Install
 
@@ -28,7 +28,7 @@ Updating keeps attitudes and notes.
 
 ## What it does
 
-Tracks how the people the party has met feel about them, using GM Core's attitudes: Hostile, Unfriendly, Indifferent, Friendly and Helpful. The GM sets each NPC's attitude and marks who the party has met. Players get a read-only People window: portrait, the name they know the NPC by, the attitude, a one-line description, and shared party notes they can add to.
+Tracks how the people the party has met feel about them, using GM Core's attitudes: Hostile, Unfriendly, Indifferent, Friendly and Helpful. The GM sets each NPC's attitude and marks who the party has met. Players get a read-only People window: portrait, the name they know the NPC by, the attitude, a one-line description, and shared party notes they can add to. As the cast grows, the GM sorts NPCs into groups and archives the ones who have left the story, so their attitude is still on record when they come back.
 
 ## Opening it
 
@@ -38,13 +38,25 @@ The window remembers its size and place, in each browser.
 
 ## For the GM
 
-- **Mark people as met**: select their tokens and click "Mark selected tokens as met", or right-click an NPC in the Actors sidebar and choose "People: met / not met", or turn off the "Met only" chip in the window and tick Met on a card. Marking from a token whose name differs from the prototype token name fills in "Known as" with the token's name.
+- **Mark people as met**: select their tokens and click "Mark selected tokens as met" (when you have groups, it asks which one to put them in), or right-click an NPC in the Actors sidebar and choose "People: met / not met", or turn off the "Met only" chip in the window and tick Met on a card. Marking from a token whose name differs from the prototype token name fills in "Known as" with the token's name.
 - **Chips**: "Met only" hides NPCs the party hasn't met; "Cast" shows only actors your campaign module marks as Cast: list that module's id in the "Cast flag scopes" setting (empty by default), and any actor with `flags.<id>.cast` set counts. Both are remembered in this browser.
 - Attitude is the NPC's real attitude. "Players see" is what the party is shown: the same, a different attitude (someone hiding how they feel), or Unknown. The GM sees both.
 - Setting Hostile when the NPC has tokens on the current scene that aren't Hostile asks whether to set those tokens' disposition to Hostile; Friendly or Helpful asks the same for Friendly. Nothing changes unless you say yes.
 - "Toward each character" sets how the NPC feels about one character in particular, when it differs from their general attitude: Unfriendly to Vance but Helpful to Kestrel. Leave a character on "As above" to use the general attitude. Players see these as small tags under the attitude, but only while "Players see" is "The same"; an NPC hiding how they feel shows the players nothing about individual characters either.
 - The one-line description is shown to players. Use it for who they are and where the party met them.
-- Click a portrait to open the NPC's sheet.
+- Click a portrait to open the NPC's sheet. Drag it onto the sidebar to move the NPC (see below).
+
+## Groups and the archive
+
+The sidebar on the left lists **Everyone** (everyone not archived), each of your groups with how many are in it, **No group**, and **Archived** at the bottom.
+
+- **Groups**: one per NPC, named by you: a place, an arc, a faction ("Fenrusk", "The company"). Set it in a card's Group field, which suggests the groups you have, or drag the card's portrait onto a group in the sidebar. **New group** adds an empty one. Drag a group up or down the list to move it, or click **Sort A to Z**.
+- **Archive** an NPC who has left the story (the Archive button on the card, or drag them onto Archived). Their attitude, per-character attitudes and notes are kept; **Bring back** (or dragging them onto Everyone) returns them to the lists.
+- With a group open, the bar above its cards has **Rename** (everyone in it follows; renaming to a group you already have merges the two, after asking), **Archive all**, **Bring back** for its archived people, and **Remove group** (its people keep their records, with no group).
+- The search box looks everywhere, the archive included; a card found that way shows its group and whether it's archived.
+- The arrows beside the search box sort A to Z or by who was met most recently. The window remembers the sort and the group you were looking at, in each browser.
+
+Players see the same sidebar, built only from the NPCs they've met: a group with nobody they've met doesn't appear for them, so a group can be set up ahead of time. Name groups as the party would know them, since players see the names.
 
 ## Names and portraits
 
@@ -62,11 +74,13 @@ Notes are a list of short entries, each with who wrote it, newest last. Any play
 
 ## What players can read
 
-The real attitude and the "Players see" value live in the actor's flags, which Foundry sends to every client. The window and the API only show players the shown attitude, but a player who reads the actor in the console can see the real one. Treat "Players see" as a courtesy, not a secret.
+The real attitude and the "Players see" value live in the actor's flags, which Foundry sends to every client. The window and the API only show players the shown attitude, but a player who reads the actor in the console can see the real one. Treat "Players see" as a courtesy, not a secret. The same goes for the list of groups (a world setting), which includes groups the party hasn't met anyone from yet.
 
 ## Where the data lives
 
-On each NPC actor, in `flags.pf2e-npc-attitudes.npc`. Unlinked NPCs keep it on the actor in the sidebar, not on individual tokens.
+On each NPC actor, in `flags.pf2e-npc-attitudes.npc` (including its group and whether it's archived). Unlinked NPCs keep it on the actor in the sidebar, not on individual tokens. The order of the groups is the world setting `pf2e-npc-attitudes.groups`.
+
+Macros for groups: `api.setGroup(actor, "Fenrusk")`, `api.setArchived(actor, true)`, `api.groups()`, and `api.addGroup`, `api.renameGroup(from, to)`, `api.removeGroup`, `api.archiveGroup(name, archived)`, `api.moveGroup(name, beforeName)`, `api.sortGroups()`.
 
 ## Changes
 

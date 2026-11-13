@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.0
+
+- Groups and an archive, for when the cast grows. The People window has a sidebar: Everyone, each of your groups with a count, No group, and Archived. Put an NPC in a group from the card's Group field or by dragging the portrait onto a group; archive someone who has left the story, with their attitude and notes kept, and bring them back any time.
+- With a group open: Rename (everyone in it follows), Archive all, Bring back, Remove group. New group adds one; drag groups into any order, or sort them A to Z.
+- Players see the same sidebar, built only from the NPCs they've met, so groups can be set up ahead of time.
+- Search looks everywhere, the archive included.
+- Sort by who was met most recently, beside A to Z.
+- Mark selected tokens as met asks which group to put them in.
+
 ## 1.0.0
 
 - The People window remembers its size and place, in each browser.
