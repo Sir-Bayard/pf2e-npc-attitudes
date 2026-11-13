@@ -3,6 +3,7 @@
 ## 1.1.1
 
 - A card's Group field is a menu: None, every group in your order, and New group... to name a new one. It was a text box whose suggestions showed only names matching what was already in it, so the other groups never appeared.
+- Dragging an archived NPC onto a group (or No group) brings them back as well as moving them.
 
 ## 1.1.0
 

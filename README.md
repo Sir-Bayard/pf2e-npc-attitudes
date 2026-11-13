@@ -51,7 +51,7 @@ The window remembers its size and place, in each browser.
 The sidebar on the left lists **Everyone** (everyone not archived), each of your groups with how many are in it, **No group**, and **Archived** at the bottom.
 
 - **Groups**: one per NPC, named by you: a place, an arc, a faction ("Greywatch", "The Ridge Road"). Pick it from a card's Group menu, which lists your groups and New group... to make one, or drag the card's portrait onto a group in the sidebar. **New group** adds an empty one. Drag a group up or down the list to move it, or click **Sort A to Z**.
-- **Archive** an NPC who has left the story (the Archive button on the card, or drag them onto Archived). Their attitude, per-character attitudes and notes are kept; **Bring back** (or dragging them onto Everyone) returns them to the lists.
+- **Archive** an NPC who has left the story (the Archive button on the card, or drag them onto Archived). Their attitude, per-character attitudes and notes are kept; **Bring back** (or dragging them onto Everyone, a group or No group) returns them to the lists.
 - With a group open, the bar above its cards has **Rename** (everyone in it follows; renaming to a group you already have merges the two, after asking), **Archive all**, **Bring back** for its archived people, and **Remove group** (its people keep their records, with no group).
 - The search box looks everywhere, the archive included; a card found that way shows its group and whether it's archived.
 - The arrows beside the search box sort A to Z or by who was met most recently. The window remembers the sort and the group you were looking at, in each browser.

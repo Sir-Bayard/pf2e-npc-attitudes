@@ -770,7 +770,7 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
 
   _onFirstRender() {
     openApps.add(this);
-    // The GM drags a card by its portrait onto a sidebar row: a group, No group, Everyone (bring back) or Archived.
+    // The GM drags a card by its portrait onto a sidebar row: a group or No group (bringing back an archived NPC), Everyone (bring back) or Archived.
     this.element.addEventListener("dragstart", (ev) => {
       const row = ev.target.closest?.("[data-drag-group]");
       if (row && game.user.isGM) {
@@ -840,8 +840,10 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
       if (!actor || !game.user.isGM) return;
       const view = zone.dataset.dropView;
       if (view === "archived" || view === "all") return record(actor).archived === (view === "archived") ? undefined : setArchived(actor, view === "archived");
-      if (view === "none") return setGroup(actor, "");
-      if (view.startsWith("group:")) return setGroup(actor, view.slice(6));
+      if (view !== "none" && !view.startsWith("group:")) return;
+      const group = view === "none" ? "" : view.slice(6);
+      if (!record(actor).archived) return setGroup(actor, group);
+      return update(actor, { group: canonicalGroup(group), archived: false });
     });
   }
 
