@@ -59,6 +59,7 @@ function record(actor) {
   return {
     met: !!f.met,
     metAt: f.metAt ?? null,
+    metOn: f.metOn ?? null,
     attitude: f.attitude ?? null,
     shown: f.shown ?? "same",
     blurb: f.blurb ?? "",
@@ -66,7 +67,7 @@ function record(actor) {
     portrait: f.portrait ?? "",
     notes: noteEntries(f.notes),
     pcs: f.pcs ?? {},
-    group: typeof f.group === "string" ? f.group : "",
+    group: typeof f.group === "string" ? f.group.replace(/\s+/g, " ").trim() : "",
     archived: !!f.archived,
   };
 }
@@ -99,12 +100,17 @@ function groupNames() {
   return [...new Set([...listed, ...used])];
 }
 const cleanGroup = (name) => String(name ?? "").replace(/\s+/g, " ").trim().slice(0, GROUP_MAX);
+/** A typed group name as the group it means: an existing group spelled with other capitals is that group. */
+function canonicalGroup(name) {
+  const group = cleanGroup(name);
+  return groupNames().find((g) => g.toLowerCase() === group.toLowerCase()) ?? group;
+}
 
-/** Put an NPC in a group (an empty name takes it out); a new name joins the list of groups. */
+/** Put an NPC in a group (an empty name takes it out). A new name shows as a group while someone is in it. */
 async function setGroup(actor, name) {
   if (!game.user.isGM || !isNPC(actor)) return;
-  const group = cleanGroup(name);
-  if (group && !(game.settings.get(MOD, "groups") ?? []).includes(group)) await game.settings.set(MOD, "groups", [...(game.settings.get(MOD, "groups") ?? []), group]);
+  const group = canonicalGroup(name);
+  if (record(actor).group === group) return;
   await update(actor, { group });
 }
 
@@ -119,7 +125,7 @@ async function updateMany(actors, changes) {
 
 /** Add an empty group to the list. Returns the cleaned name, or "" when there was none. */
 async function addGroup(name) {
-  const group = cleanGroup(name);
+  const group = canonicalGroup(name);
   if (!game.user.isGM || !group) return "";
   const list = game.settings.get(MOD, "groups") ?? [];
   if (!list.includes(group)) await game.settings.set(MOD, "groups", [...list, group]);
@@ -128,11 +134,11 @@ async function addGroup(name) {
 
 /** Rename a group, in the list (keeping its place) and on every NPC in it. A name already in use merges the two. */
 async function renameGroup(from, to) {
-  const group = cleanGroup(to);
+  const group = cleanGroup(to).toLowerCase() === from.toLowerCase() ? cleanGroup(to) : canonicalGroup(to);
   if (!game.user.isGM || !group || group === from) return "";
   const list = groupNames();
-  await game.settings.set(MOD, "groups", [...new Set(list.map((g) => (g === from ? group : g)))]);
   await updateMany(groupMembers(from), { group });
+  await game.settings.set(MOD, "groups", [...new Set(list.map((g) => (g === from ? group : g)))]);
   return group;
 }
 
@@ -242,7 +248,8 @@ async function setTowards(actor, pcId, id) {
 
 async function markMet(actor, met = true) {
   if (!game.user.isGM || !isNPC(actor)) return;
-  await update(actor, { met, metAt: met ? (record(actor).metAt ?? game.time.worldTime) : null });
+  const r = record(actor);
+  await update(actor, { met, metAt: met ? (r.metAt ?? game.time.worldTime) : null, metOn: met ? (r.metOn ?? Date.now()) : null });
 }
 
 async function setAttitude(actor, id, { shown } = {}) {
@@ -537,10 +544,10 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
     classes: ["npa-app"],
     tag: "div",
     window: { title: "People", icon: "fa-solid fa-address-book", resizable: true },
-    position: { width: 880, height: 680 },
+    position: { width: 940, height: 680 },
     actions: {
       npaFilter: PeopleApp.#onFilter,
-      npaView: PeopleApp.#onViewGroup,
+      npaGoTo: PeopleApp.#onGoTo,
       npaSort: PeopleApp.#onSort,
       npaArchive: PeopleApp.#onArchive,
       npaNewGroup: PeopleApp.#onNewGroup,
@@ -587,7 +594,7 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
 
   people() {
     const byName = (x, y) => knownName(x.actor).localeCompare(knownName(y.actor));
-    const recent = (x, y) => (y.r.metAt ?? -Infinity) - (x.r.metAt ?? -Infinity) || byName(x, y);
+    const recent = (x, y) => (y.r.metAt ?? -Infinity) - (x.r.metAt ?? -Infinity) || (y.r.metOn ?? 0) - (x.r.metOn ?? 0) || byName(x, y);
     return this.base()
       .filter(({ r }) => this.inView(r))
       .filter(({ actor, r }) => {
@@ -595,7 +602,7 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
         if (this.state.filter !== "all" && a.id !== this.state.filter) return false;
         const q = this.state.search.trim().toLowerCase();
         if (!q) return true;
-        const hay = `${knownName(actor)} ${this.isGM ? actor.name : ""} ${r.blurb}`.toLowerCase();
+        const hay = `${knownName(actor)} ${this.isGM ? actor.name : ""} ${r.blurb} ${r.group}`.toLowerCase();
         return hay.includes(q);
       })
       .sort((x, y) => Number(y.r.met) - Number(x.r.met) || (this.state.sort === "recent" ? recent(x, y) : byName(x, y)));
@@ -606,8 +613,8 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
     const all = this.base();
     const active = all.filter(({ r }) => !r.archived);
     const count = (fn) => active.filter(({ r }) => fn(r)).length;
-    const names = this.isGM ? groupNames() : [...new Set(all.map(({ r }) => r.group).filter(Boolean))].filter((g) => count((r) => r.group === g));
-    const row = (view, label, n, icon = "", group = null) => `<a data-action="npaView" data-view="${esc(view)}" ${this.isGM ? `data-drop-view="${esc(view)}"` : ""} ${this.isGM && group !== null ? `draggable="true" data-drag-group="${esc(group)}"` : ""} class="${this.state.view === view ? "active" : ""}">${icon ? `<i class="fa-solid ${icon}"></i> ` : ""}<span>${esc(label)}</span><em>${n}</em></a>`;
+    const names = groupNames().filter((g) => this.isGM || count((r) => r.group === g));
+    const row = (view, label, n, icon = "", group = null) => `<a data-action="npaGoTo" data-view="${esc(view)}" ${this.isGM ? `data-drop-view="${esc(view)}"` : ""} ${this.isGM && group !== null ? `draggable="true" data-drag-group="${esc(group)}"` : ""} class="${this.state.view === view ? "active" : ""}">${icon ? `<i class="fa-solid ${icon}"></i> ` : ""}<span>${esc(label)}</span><em>${n}</em></a>`;
     const none = count((r) => !r.group);
     const archived = all.filter(({ r }) => r.archived).length;
     return `<nav class="npa-side">
@@ -642,10 +649,12 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
     // A group view that's gone (renamed, emptied, or one a player no longer sees) falls back to Everyone.
     const g = v.startsWith("group:") ? v.slice(6) : null;
     if (g !== null && !(this.isGM ? groupNames().includes(g) : this.base().some(({ r }) => r.group === g && !r.archived))) this.state.view = "all";
+    if (!this.isGM && v === "archived" && !this.base().some(({ r }) => r.archived)) this.state.view = "all";
+    if (!this.isGM && v === "none" && !this.base().some(({ r }) => !r.archived && !r.group)) this.state.view = "all";
     const el = document.createElement("div");
     el.className = "npa";
     const people = this.people();
-    const filters = [{ id: "all", label: "Everyone" }, ...ATTITUDES, UNKNOWN]
+    const filters = [{ id: "all", label: "All" }, ...ATTITUDES, UNKNOWN]
       .map((a) => `<a data-action="npaFilter" data-id="${a.id}" class="${this.state.filter === a.id ? "active" : ""}">${a.icon ? `<i class="fa-regular ${a.icon}"></i> ` : ""}${a.label}</a>`)
       .join("");
     const chip = (id, label, tip) => `<a data-action="npaChip" data-chip="${id}" class="${this.state[id] ? "active" : ""}" data-tooltip="${tip}">${label}</a>`;
@@ -751,9 +760,12 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
   _replaceHTML(result, content) {
     // Keep the scroll position across re-renders.
     const top = content.querySelector(".npa-body")?.scrollTop ?? 0;
+    const sideTop = content.querySelector(".npa-side")?.scrollTop ?? 0;
     content.replaceChildren(result);
     const body = content.querySelector(".npa-body");
     if (body) body.scrollTop = top;
+    const side = content.querySelector(".npa-side");
+    if (side) side.scrollTop = sideTop;
   }
 
   _onFirstRender() {
@@ -789,6 +801,7 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
         slot.row.classList.add(slot.after ? "npa-drop-after" : "npa-drop-before");
         return;
       }
+      clearSlot();
       const zone = zoneOf(ev);
       if (!zone) return;
       ev.preventDefault();
@@ -806,7 +819,11 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
         this._dropZone = null;
       }
     });
-    this.element.addEventListener("dragend", clearSlot);
+    this.element.addEventListener("dragend", () => {
+      clearSlot();
+      this._dropZone?.classList.remove("npa-drop-over");
+      this._dropZone = null;
+    });
     this.element.addEventListener("drop", async (ev) => {
       this._dropZone?.classList.remove("npa-drop-over");
       this._dropZone = null;
@@ -822,8 +839,7 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
       const actor = game.actors.get(ev.dataTransfer.getData(NPC_DRAG));
       if (!actor || !game.user.isGM) return;
       const view = zone.dataset.dropView;
-      if (view === "archived") return setArchived(actor, true);
-      if (view === "all") return setArchived(actor, false);
+      if (view === "archived" || view === "all") return record(actor).archived === (view === "archived") ? undefined : setArchived(actor, view === "archived");
       if (view === "none") return setGroup(actor, "");
       if (view.startsWith("group:")) return setGroup(actor, view.slice(6));
     });
@@ -889,7 +905,7 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
     this.render();
   }
 
-  static #onViewGroup(event, target) {
+  static #onGoTo(event, target) {
     this.state.view = target.dataset.view;
     if (this.state.search) this.state.search = "";
     saveChips(this.state);
@@ -995,15 +1011,16 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
       const pick = await foundry.applications.api.DialogV2.wait({
         window: { title: "Mark as met" },
         classes: ["npa-dialog"],
-        content: `<label class="npa-ask">Put ${seeds.size === 1 ? "them" : `all ${seeds.size}`} in <select name="group"><option value="__keep">their group as it is</option><option value="">no group</option>${names.map((g) => `<option value="${esc(g)}">${esc(g)}</option>`).join("")}</select></label>`,
+        content: `<label class="npa-ask">Put ${seeds.size === 1 ? "them" : `all ${seeds.size}`} in <select name="group"><option value="k">their group as it is</option><option value="n">no group</option>${names.map((g) => `<option value="g:${esc(g)}">${esc(g)}</option>`).join("")}</select></label>`,
         buttons: [
-          { action: "ok", label: "Mark as met", icon: "fa-solid fa-user-plus", default: true, callback: (ev, button) => button.form.elements.group.value },
+          { action: "ok", label: "Mark as met", icon: "fa-solid fa-user-plus", default: true, callback: (ev, button) => ({ choice: button.form.elements.group.value }) },
           { action: "cancel", label: "Cancel" },
         ],
         rejectClose: false,
       });
-      if (pick === null || pick === "cancel" || pick === undefined) return;
-      if (pick !== "__keep") group = pick;
+      if (!pick || typeof pick !== "object") return;
+      if (pick.choice === "n") group = "";
+      else if (pick.choice.startsWith("g:")) group = pick.choice.slice(2);
     }
     for (const [actor, knownAs] of seeds) {
       await markMet(actor, true);
@@ -1088,8 +1105,12 @@ Hooks.once("ready", () => {
   game.modules.get(MOD).api = {
     open: () => PeopleApp.open(),
     markMet, setAttitude, setTowards, setKnownAs, reveal, announce, addNote, knownName, setGroup, setArchived, addGroup, renameGroup, removeGroup, archiveGroup, moveGroup, sortGroups,
-    groups: () => (game.user.isGM ? groupNames() : [...new Set(game.actors.filter(isNPC).map((a) => record(a)).filter((r) => r.met && r.group).map((r) => r.group))]),
-    record: (actor) => (game.user.isGM ? record(actor) : publicRecord(actor)),
+    groups: () => {
+      if (game.user.isGM) return groupNames();
+      const seen = new Set(game.actors.filter(isNPC).map((a) => record(a)).filter((r) => r.met && !r.archived && r.group).map((r) => r.group));
+      return groupNames().filter((g) => seen.has(g));
+    },
+    record: (actor) => (game.user.isGM ? record(actor) : record(actor).met ? publicRecord(actor) : { met: false }),
   };
 });
 
