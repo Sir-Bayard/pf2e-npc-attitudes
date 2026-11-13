@@ -1,15 +1,12 @@
 /**
- * PF2e NPC Attitudes
- * How the people the party has met feel about them.
+ * PF2e NPC Attitudes: how the people the party has met feel about them.
  *
- * Each NPC actor carries a flag with whether the party has met them, their attitude (GM Core's
- * Hostile to Helpful), what the players are shown when that differs, a public one-line description,
- * the name and portrait the party knows them by, and the party's shared notes. Players can only add
- * and remove their own notes; those go through the GM's client.
+ * Each NPC actor carries a flag (see record) with whether the party has met them, their attitude (GM Core's Hostile
+ * to Helpful), what the players are shown when that differs, attitudes toward particular characters, a public
+ * one-line description, the name and portrait the party knows them by, and the party's shared notes. Players can only
+ * add and remove their own notes; those go through the GM's client.
  *
- * The name shown to players is the record's "known as" name, else the actor's prototype token name.
- * The actor's own name is shown to the GM only. The portrait shown to players is the record's
- * portrait, else the prototype token image, else the actor image.
+ * Players see the name from knownName and the portrait from playerImg; the actor's own name is shown to the GM only.
  */
 
 const MOD = "pf2e-npc-attitudes";
@@ -39,7 +36,7 @@ function esc(s) {
 const isPrimaryGM = () => game.user.isGM && game.users.activeGM?.id === game.user.id;
 const FP = () => foundry.applications.apps.FilePicker.implementation;
 
-/** Party notes as a list of entries. Older records hold one string; it becomes the first entry. */
+/** Party notes as a list of entries. A legacy record's single string becomes the first entry. */
 function noteEntries(notes) {
   if (Array.isArray(notes)) return notes.filter((e) => e && typeof e.text === "string").map((e) => ({ by: e.by ?? null, at: e.at ?? null, text: e.text }));
   const text = String(notes ?? "").trim();
@@ -110,17 +107,18 @@ function shownAttitude(r) {
   return attitude(r.attitude) ?? UNKNOWN;
 }
 
-/** The name the party knows: the record's "known as", else the prototype token name. */
+/** The name the party knows: the record's "known as", else the prototype token name, else the actor name. */
 function knownName(actor) {
   return record(actor).knownAs || actor.prototypeToken?.name?.trim() || actor.name;
 }
 
-/** The image players see: the record's portrait, else the prototype token image, else the actor image. */
-/** Art that came with a stat block (the system's or a Paizo token pack's): it names the real creature, so players don't get it. */
+/**
+ * Shipped art (the system's, a Paizo module's, Foundry's icons) can name the real creature, so players don't see it.
+ */
 const SHIPPED_ART = /^(?:systems\/pf2e\/|modules\/(?:pf2e-tokens-|pathfinder-tokens|pf2e-bestiary-|pf2e-monster-core|pf2e-npc-core)|icons\/)/i;
 /**
- * The art players see: the record's own portrait, else the actor's portrait unless it is a stand-in's shipped art
- * (then the token, which the GM chose), else whatever is left. Full art, cropped to the card; a click opens it whole.
+ * The art players see: the record's portrait, else the actor image unless it is shipped art, else the prototype token
+ * image (which the GM chose), else the actor image. Full art, cropped to the card; a click opens it whole.
  */
 function playerImg(actor, r = record(actor)) {
   if (r.portrait) return r.portrait;
@@ -231,7 +229,7 @@ function onSocket(msg) {
   }
   if (msg.type === "noteDelete") {
     const by = String(msg.by ?? "");
-    if (!by) return; // entries without an author (older notes) are the GM's to remove
+    if (!by) return; // entries without an author are the GM's to remove
     return writeNotes(actor, record(actor).notes.filter((e) => !sameNote(e, msg.at, by)));
   }
 }
@@ -301,10 +299,12 @@ function saveChips(state) {
 /* Window memory                                                      */
 /* ------------------------------------------------------------------ */
 
-/* The same code in each of Sir Bayard's modules. A window made with rememberWindow keeps the size and place the user
- * gives it, in this browser, and comes back from minimized whole: Foundry's restore animation can stall at the title
- * bar's height (seen on 14.370, core windows too) and Foundry sets the size while it runs, so a restored window came
- * back as a strip. */
+/*
+ * Window memory, shared verbatim with the author's other modules (keep the copies in sync). A window made with
+ * rememberWindow keeps the size and place the user gives it, in this browser, and restores from minimized at full
+ * size: Foundry's restore animation can stall at the title bar's height (seen on Foundry 14.370, core windows too)
+ * and Foundry sets the size while it runs, which would leave the window a strip.
+ */
 
 /** Wait for an element's own transitions to end; a hidden tab pauses them, so after a second they're finished by hand. */
 async function settleWindow(el) {
@@ -682,7 +682,7 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
   static #onOpen(event, target) {
     game.actors.get(target.dataset.id)?.sheet?.render(true);
   }
-  /** The full picture, in Foundry's image viewer (players: the picture only, under the known name). */
+  /** A player card's picture, whole in Foundry's image viewer, under the known name. */
   static #onView(event, target) {
     const actor = game.actors.get(target.dataset.id);
     if (!actor) return;
@@ -770,7 +770,7 @@ Hooks.on("getSceneControlButtons", (controls) => {
   };
 });
 
-/** Right-click an NPC in the Actors sidebar to mark them as met. */
+/** Right-click an NPC in the Actors sidebar to mark them as met or not met. */
 Hooks.on("getActorContextOptions", (app, options) => {
   const get = (li) => game.actors.get(li?.dataset?.entryId);
   options.push({
