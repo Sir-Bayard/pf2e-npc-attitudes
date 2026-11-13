@@ -143,6 +143,22 @@ async function removeGroup(name) {
   await game.settings.set(MOD, "groups", groupNames().filter((g) => g !== name));
 }
 
+/** Move a group just before (or after) another in the list. */
+async function moveGroup(name, target, after = false) {
+  if (!game.user.isGM || name === target) return;
+  const list = groupNames().filter((g) => g !== name);
+  const at = list.indexOf(target);
+  if (at < 0) return;
+  list.splice(after ? at + 1 : at, 0, name);
+  await game.settings.set(MOD, "groups", list);
+}
+
+/** Put the groups in A to Z order (they can be dragged into another order after). */
+async function sortGroups() {
+  if (!game.user.isGM) return;
+  await game.settings.set(MOD, "groups", [...groupNames()].sort((a, b) => a.localeCompare(b)));
+}
+
 /** Archive or bring back everyone in a group. */
 async function archiveGroup(name, archived = true) {
   if (!game.user.isGM) return;
@@ -332,6 +348,8 @@ let refreshTimer = null;
 const TYPING = "textarea, input[type=text], input[type=search], select";
 /** The drag data type of a card dragged by its portrait. */
 const NPC_DRAG = "application/x-npa-npc";
+/** The drag data type of a group row dragged to a new place in the list. */
+const GROUP_DRAG = "application/x-npa-group";
 function refresh() {
   clearTimeout(refreshTimer);
   refreshTimer = setTimeout(() => {
@@ -526,6 +544,7 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
       npaSort: PeopleApp.#onSort,
       npaArchive: PeopleApp.#onArchive,
       npaNewGroup: PeopleApp.#onNewGroup,
+      npaSortGroups: () => sortGroups(),
       npaRenameGroup: PeopleApp.#onRenameGroup,
       npaArchiveGroup: PeopleApp.#onArchiveGroup,
       npaRestoreGroup: PeopleApp.#onRestoreGroup,
@@ -588,15 +607,16 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
     const active = all.filter(({ r }) => !r.archived);
     const count = (fn) => active.filter(({ r }) => fn(r)).length;
     const names = this.isGM ? groupNames() : [...new Set(all.map(({ r }) => r.group).filter(Boolean))].filter((g) => count((r) => r.group === g));
-    const row = (view, label, n, icon = "") => `<a data-action="npaView" data-view="${esc(view)}" ${this.isGM ? `data-drop-view="${esc(view)}"` : ""} class="${this.state.view === view ? "active" : ""}">${icon ? `<i class="fa-solid ${icon}"></i> ` : ""}<span>${esc(label)}</span><em>${n}</em></a>`;
+    const row = (view, label, n, icon = "", group = null) => `<a data-action="npaView" data-view="${esc(view)}" ${this.isGM ? `data-drop-view="${esc(view)}"` : ""} ${this.isGM && group !== null ? `draggable="true" data-drag-group="${esc(group)}"` : ""} class="${this.state.view === view ? "active" : ""}">${icon ? `<i class="fa-solid ${icon}"></i> ` : ""}<span>${esc(label)}</span><em>${n}</em></a>`;
     const none = count((r) => !r.group);
     const archived = all.filter(({ r }) => r.archived).length;
     return `<nav class="npa-side">
         ${row("all", "Everyone", active.length)}
-        ${names.map((g) => row(`group:${g}`, g, count((r) => r.group === g))).join("")}
+        ${names.map((g) => row(`group:${g}`, g, count((r) => r.group === g), "", g)).join("")}
         ${(none || this.isGM) && names.length ? row("none", "No group", none) : ""}
         ${archived || this.isGM ? `<hr>${row("archived", "Archived", archived, "fa-box-archive")}` : ""}
         ${this.isGM ? `<a data-action="npaNewGroup" class="npa-new"><i class="fa-solid fa-plus"></i> <span>New group</span></a>` : ""}
+        ${this.isGM && names.length > 1 ? `<a data-action="npaSortGroups" class="npa-new" data-tooltip="Drag a group to move it"><i class="fa-solid fa-arrow-down-a-z"></i> <span>Sort A to Z</span></a>` : ""}
       </nav>`;
   }
 
@@ -740,13 +760,35 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
     openApps.add(this);
     // The GM drags a card by its portrait onto a sidebar row: a group, No group, Everyone (bring back) or Archived.
     this.element.addEventListener("dragstart", (ev) => {
+      const row = ev.target.closest?.("[data-drag-group]");
+      if (row && game.user.isGM) {
+        ev.dataTransfer.setData(GROUP_DRAG, row.dataset.dragGroup);
+        ev.dataTransfer.effectAllowed = "move";
+        return;
+      }
       const img = ev.target.closest?.("[data-drag-npc]");
       if (!img || !game.user.isGM) return;
       ev.dataTransfer.setData(NPC_DRAG, img.dataset.dragNpc);
       ev.dataTransfer.effectAllowed = "move";
     });
     const zoneOf = (ev) => (ev.dataTransfer?.types?.includes(NPC_DRAG) ? ev.target.closest?.("[data-drop-view]") : null);
+    // A group row dragged over another goes before it, or after it when over its lower half.
+    const slotOf = (ev) => {
+      const row = ev.dataTransfer?.types?.includes(GROUP_DRAG) ? ev.target.closest?.("[data-drag-group]") : null;
+      if (!row) return null;
+      const box = row.getBoundingClientRect();
+      return { row, after: ev.clientY > box.top + box.height / 2 };
+    };
+    const clearSlot = () => this.element.querySelectorAll(".npa-drop-before, .npa-drop-after").forEach((el) => el.classList.remove("npa-drop-before", "npa-drop-after"));
     this.element.addEventListener("dragover", (ev) => {
+      const slot = slotOf(ev);
+      if (slot) {
+        ev.preventDefault();
+        ev.dataTransfer.dropEffect = "move";
+        clearSlot();
+        slot.row.classList.add(slot.after ? "npa-drop-after" : "npa-drop-before");
+        return;
+      }
       const zone = zoneOf(ev);
       if (!zone) return;
       ev.preventDefault();
@@ -758,14 +800,22 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
       }
     });
     this.element.addEventListener("dragleave", (ev) => {
+      if (!this.element.contains(ev.relatedTarget)) clearSlot();
       if (this._dropZone && !this._dropZone.contains(ev.relatedTarget)) {
         this._dropZone.classList.remove("npa-drop-over");
         this._dropZone = null;
       }
     });
+    this.element.addEventListener("dragend", clearSlot);
     this.element.addEventListener("drop", async (ev) => {
       this._dropZone?.classList.remove("npa-drop-over");
       this._dropZone = null;
+      const slot = slotOf(ev);
+      clearSlot();
+      if (slot) {
+        ev.preventDefault();
+        return moveGroup(ev.dataTransfer.getData(GROUP_DRAG), slot.row.dataset.dragGroup, slot.after);
+      }
       const zone = zoneOf(ev);
       if (!zone) return;
       ev.preventDefault();
@@ -1037,7 +1087,7 @@ Hooks.once("ready", () => {
   game.socket.on(`module.${MOD}`, onSocket);
   game.modules.get(MOD).api = {
     open: () => PeopleApp.open(),
-    markMet, setAttitude, setTowards, setKnownAs, reveal, announce, addNote, knownName, setGroup, setArchived, addGroup, renameGroup, removeGroup, archiveGroup,
+    markMet, setAttitude, setTowards, setKnownAs, reveal, announce, addNote, knownName, setGroup, setArchived, addGroup, renameGroup, removeGroup, archiveGroup, moveGroup, sortGroups,
     groups: () => (game.user.isGM ? groupNames() : [...new Set(game.actors.filter(isNPC).map((a) => record(a)).filter((r) => r.met && r.group).map((r) => r.group))]),
     record: (actor) => (game.user.isGM ? record(actor) : publicRecord(actor)),
   };

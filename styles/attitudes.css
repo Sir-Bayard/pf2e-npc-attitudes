@@ -27,6 +27,9 @@
 .npa-app .npa-card.npa-archived { opacity: 0.85; }
 .npa-app .npa-group input[type="text"] { width: 180px; }
 .npa-app .npa .npa-side a.npa-new { margin-top: 6px; opacity: 0.65; font-size: 12px; }
+.npa-app .npa .npa-side a[draggable="true"] { cursor: grab; }
+.npa-app .npa .npa-side a.npa-drop-before { box-shadow: inset 0 2px 0 currentColor; }
+.npa-app .npa .npa-side a.npa-drop-after { box-shadow: inset 0 -2px 0 currentColor; }
 .npa-app .npa .npa-side a.npa-drop-over { outline: 1px dashed currentColor; background: rgba(255, 255, 255, 0.12); }
 .npa-app .npa-groupbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 8px; }
 .npa-app .npa-groupbar strong { font-size: 14px; margin-right: 6px; }
