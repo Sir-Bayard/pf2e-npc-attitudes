@@ -15,7 +15,17 @@
 .npa-app .npa-gm { display: flex; gap: 12px; align-items: center; margin-left: auto; }
 .npa-app .npa-gm button { width: auto; flex: 0 0 auto; padding: 0 8px; line-height: 26px; }
 
+.npa-app .npa-main-row { flex: 1; min-height: 0; display: flex; }
+.npa-app .npa-side { flex: 0 0 170px; overflow: auto; padding: 8px 6px; border-right: 1px solid rgba(127, 127, 127, 0.35); display: flex; flex-direction: column; gap: 2px; }
+.npa-app .npa .npa-side a { display: flex; align-items: center; gap: 6px; padding: 3px 8px; border-radius: 4px; opacity: 0.85; }
+.npa-app .npa .npa-side a span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.npa-app .npa .npa-side a em { font-style: normal; font-size: 11px; opacity: 0.6; }
+.npa-app .npa .npa-side a.active { opacity: 1; font-weight: 600; background: rgba(255, 255, 255, 0.1); }
+.npa-app .npa-side hr { width: 100%; margin: 6px 0; border: none; border-top: 1px solid rgba(127, 127, 127, 0.35); }
 .npa-app .npa-body { flex: 1; min-height: 0; overflow: auto; padding: 10px 12px 16px; }
+.npa-app .npa-wheres { display: flex; flex-wrap: wrap; gap: 6px; font-size: 11px; opacity: 0.7; }
+.npa-app .npa-card.npa-archived { opacity: 0.85; }
+.npa-app .npa-group input[type="text"] { width: 180px; }
 .npa-app .npa-empty { opacity: 0.7; font-style: italic; }
 .npa-app .npa-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 10px; }
 

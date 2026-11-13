@@ -66,6 +66,8 @@ function record(actor) {
     portrait: f.portrait ?? "",
     notes: noteEntries(f.notes),
     pcs: f.pcs ?? {},
+    group: typeof f.group === "string" ? f.group : "",
+    archived: !!f.archived,
   };
 }
 
@@ -80,7 +82,36 @@ function publicRecord(actor) {
     portrait: playerImg(actor, r),
     notes: r.notes,
     pcs: Object.fromEntries(shownOverrides(r).map(({ pc, a }) => [pc.id, a.id])),
+    group: r.group,
+    archived: r.archived,
   };
+}
+
+/* ------------------------------------------------------------------ */
+/* Groups and the archive                                             */
+/* ------------------------------------------------------------------ */
+
+const GROUP_MAX = 60;
+/** The GM's groups, in order: the setting's list, then any name an NPC carries that the list lacks. */
+function groupNames() {
+  const listed = (game.settings.get(MOD, "groups") ?? []).filter((g) => typeof g === "string" && g);
+  const used = game.actors.filter(isNPC).map((a) => record(a).group).filter(Boolean);
+  return [...new Set([...listed, ...used])];
+}
+const cleanGroup = (name) => String(name ?? "").replace(/\s+/g, " ").trim().slice(0, GROUP_MAX);
+
+/** Put an NPC in a group (an empty name takes it out); a new name joins the list of groups. */
+async function setGroup(actor, name) {
+  if (!game.user.isGM || !isNPC(actor)) return;
+  const group = cleanGroup(name);
+  if (group && !(game.settings.get(MOD, "groups") ?? []).includes(group)) await game.settings.set(MOD, "groups", [...(game.settings.get(MOD, "groups") ?? []), group]);
+  await update(actor, { group });
+}
+
+/** Archive an NPC (out of the story for now, still on record) or bring them back. */
+async function setArchived(actor, archived = true) {
+  if (!game.user.isGM || !isNPC(actor)) return;
+  await update(actor, { archived: !!archived });
 }
 
 /** The party's characters, for attitudes toward one character in particular. */
@@ -283,15 +314,15 @@ function refresh() {
 function loadChips() {
   try {
     const c = JSON.parse(localStorage.getItem(CHIPS_KEY) ?? "{}");
-    return { cast: !!c.cast, metOnly: c.metOnly !== false };
+    return { cast: !!c.cast, metOnly: c.metOnly !== false, sort: c.sort === "recent" ? "recent" : "name", view: typeof c.view === "string" ? c.view : "all" };
   } catch {
-    return { cast: false, metOnly: true };
+    return { cast: false, metOnly: true, sort: "name", view: "all" };
   }
 }
 
 function saveChips(state) {
   try {
-    localStorage.setItem(CHIPS_KEY, JSON.stringify({ cast: state.cast, metOnly: state.metOnly }));
+    localStorage.setItem(CHIPS_KEY, JSON.stringify({ cast: state.cast, metOnly: state.metOnly, sort: state.sort, view: state.view }));
   } catch {}
 }
 
@@ -448,11 +479,14 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
     position: { width: 880, height: 680 },
     actions: {
       npaFilter: PeopleApp.#onFilter,
+      npaView: PeopleApp.#onViewGroup,
+      npaSort: PeopleApp.#onSort,
+      npaArchive: PeopleApp.#onArchive,
       npaChip: PeopleApp.#onChip,
       npaMarkSelected: PeopleApp.#onMarkSelected,
       npaMet: PeopleApp.#onMet,
       npaOpen: PeopleApp.#onOpen,
-      npaView: PeopleApp.#onView,
+      npaPicture: PeopleApp.#onView,
       npaAnnounce: PeopleApp.#onAnnounce,
       npaPickPortrait: PeopleApp.#onPickPortrait,
       npaAddNote: PeopleApp.#onAddNote,
@@ -466,11 +500,29 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
     return game.user.isGM;
   }
 
-  people() {
-    const list = game.actors.filter(isNPC).map((actor) => ({ actor, r: record(actor) }));
-    return list
+  /** Everyone this user may list before the sidebar, attitude and search narrow it: players see only who they've met. */
+  base() {
+    return game.actors.filter(isNPC).map((actor) => ({ actor, r: record(actor) }))
       .filter(({ r }) => r.met || (this.isGM && !this.state.metOnly))
-      .filter(({ actor }) => !this.isGM || !this.state.cast || isCast(actor))
+      .filter(({ actor }) => !this.isGM || !this.state.cast || isCast(actor));
+  }
+
+  /** Does a person belong in the sidebar's chosen view? A search looks in every view, the archive included. */
+  inView(r) {
+    const v = this.state.view;
+    if (this.state.search.trim()) return true;
+    if (v === "archived") return r.archived;
+    if (r.archived) return false;
+    if (v === "none") return !r.group;
+    if (v.startsWith("group:")) return r.group === v.slice(6);
+    return true;
+  }
+
+  people() {
+    const byName = (x, y) => knownName(x.actor).localeCompare(knownName(y.actor));
+    const recent = (x, y) => (y.r.metAt ?? -Infinity) - (x.r.metAt ?? -Infinity) || byName(x, y);
+    return this.base()
+      .filter(({ r }) => this.inView(r))
       .filter(({ actor, r }) => {
         const a = this.isGM ? attitude(r.attitude) ?? UNKNOWN : shownAttitude(r);
         if (this.state.filter !== "all" && a.id !== this.state.filter) return false;
@@ -479,10 +531,31 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
         const hay = `${knownName(actor)} ${this.isGM ? actor.name : ""} ${r.blurb}`.toLowerCase();
         return hay.includes(q);
       })
-      .sort((x, y) => Number(y.r.met) - Number(x.r.met) || knownName(x.actor).localeCompare(knownName(y.actor)));
+      .sort((x, y) => Number(y.r.met) - Number(x.r.met) || (this.state.sort === "recent" ? recent(x, y) : byName(x, y)));
+  }
+
+  /** The sidebar: Everyone, each group, No group, Archived, with counts. Players see only groups with someone they've met. */
+  sidebar() {
+    const all = this.base();
+    const active = all.filter(({ r }) => !r.archived);
+    const count = (fn) => active.filter(({ r }) => fn(r)).length;
+    const names = this.isGM ? groupNames() : [...new Set(all.map(({ r }) => r.group).filter(Boolean))].filter((g) => count((r) => r.group === g));
+    const row = (view, label, n, icon = "") => `<a data-action="npaView" data-view="${esc(view)}" class="${this.state.view === view ? "active" : ""}">${icon ? `<i class="fa-solid ${icon}"></i> ` : ""}<span>${esc(label)}</span><em>${n}</em></a>`;
+    const none = count((r) => !r.group);
+    const archived = all.filter(({ r }) => r.archived).length;
+    return `<nav class="npa-side">
+        ${row("all", "Everyone", active.length)}
+        ${names.map((g) => row(`group:${g}`, g, count((r) => r.group === g))).join("")}
+        ${none && names.length ? row("none", "No group", none) : ""}
+        ${archived || this.isGM ? `<hr>${row("archived", "Archived", archived, "fa-box-archive")}` : ""}
+      </nav>`;
   }
 
   async _renderHTML() {
+    const v = this.state.view;
+    // A group view that's gone (renamed, emptied, or one a player no longer sees) falls back to Everyone.
+    const g = v.startsWith("group:") ? v.slice(6) : null;
+    if (g !== null && !(this.isGM ? groupNames().includes(g) : this.base().some(({ r }) => r.group === g && !r.archived))) this.state.view = "all";
     const el = document.createElement("div");
     el.className = "npa";
     const people = this.people();
@@ -496,13 +569,16 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
           <button type="button" data-action="npaMarkSelected"><i class="fa-solid fa-user-plus"></i> Mark selected tokens as met</button>
         </div>`
       : "";
-    const cards = people.length ? people.map((p) => this.#card(p)).join("") : `<p class="npa-empty">${this.isGM && this.state.metOnly ? "Nobody marked as met yet. Turn off 'Met only' to start, or select tokens and mark them." : "The party hasn't met anyone yet."}</p>`;
+    const anyone = this.base().length > 0;
+    const empty = !anyone ? (this.isGM && this.state.metOnly ? "Nobody marked as met yet. Turn off 'Met only' to start, or select tokens and mark them." : "The party hasn't met anyone yet.") : "No one here.";
+    const cards = people.length ? people.map((p) => this.#card(p)).join("") : `<p class="npa-empty">${empty}</p>`;
+    const sort = `<a data-action="npaSort" data-tooltip="${this.state.sort === "recent" ? "Sorted by who was met most recently. Click for A to Z." : "Sorted A to Z. Click for most recently met first."}"><i class="fa-solid ${this.state.sort === "recent" ? "fa-clock-rotate-left" : "fa-arrow-down-a-z"}"></i></a>`;
     el.innerHTML = `<header class="npa-head">
-        <input type="search" name="npaSearch" placeholder="Search names" value="${esc(this.state.search)}">
+        <input type="search" name="npaSearch" placeholder="Search names" value="${esc(this.state.search)}">${sort}
         <nav class="npa-filters">${filters}</nav>
         ${gm}
       </header>
-      <section class="npa-body"><div class="npa-cards">${cards}</div></section>`;
+      <div class="npa-main-row">${this.sidebar()}<section class="npa-body"><div class="npa-cards">${cards}</div></section>${this.isGM ? `<datalist id="npa-group-list">${groupNames().map((g) => `<option value="${esc(g)}">`).join("")}</datalist>` : ""}</div>`;
     return el;
   }
 
@@ -511,11 +587,17 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
     const name = esc(knownName(actor));
     const img = esc(playerImg(actor, r));
     const notes = this.#notes(actor, r);
+    // Where a card sits, when the view doesn't say it already: its group, and Archived.
+    const v = this.state.view;
+    const where = [
+      r.group && (v !== `group:${r.group}` || this.state.search.trim()) ? `<span class="npa-where"><i class="fa-solid fa-folder"></i> ${esc(r.group)}</span>` : "",
+      r.archived && (v !== "archived" || this.state.search.trim()) ? `<span class="npa-where"><i class="fa-solid fa-box-archive"></i> Archived</span>` : "",
+    ].join("");
     if (!this.isGM) {
-      return `<article class="npa-card att-${shown.id}">
-          <img src="${img}" alt="${name}" data-action="npaView" data-id="${actor.id}" data-tooltip="See the full picture">
+      return `<article class="npa-card att-${shown.id} ${r.archived ? "npa-archived" : ""}">
+          <img src="${img}" alt="${name}" data-action="npaPicture" data-id="${actor.id}" data-tooltip="See the full picture">
           <div class="npa-main">
-            <h3>${name}</h3>
+            <h3>${name}</h3>${where ? `<div class="npa-wheres">${where}</div>` : ""}
             <div class="npa-att"><i class="fa-regular ${shown.icon}"></i> ${shown.label}</div>
             ${this.#overrides(shownOverrides(r))}
             ${r.blurb ? `<p class="npa-blurb">${esc(r.blurb)}</p>` : ""}
@@ -526,18 +608,22 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
     const truth = attitude(r.attitude) ?? UNKNOWN;
     const opts = (sel, extra = []) => [...extra, ...ATTITUDES].map((a) => `<option value="${a.id}" ${a.id === sel ? "selected" : ""}>${a.label}</option>`).join("");
     const realName = actor.name !== knownName(actor) ? `<span class="npa-real" data-tooltip="The actor's name, GM only">${esc(actor.name)}</span>` : "";
-    return `<article class="npa-card att-${truth.id} ${r.met ? "" : "npa-unmet"}">
+    return `<article class="npa-card att-${truth.id} ${r.met ? "" : "npa-unmet"} ${r.archived ? "npa-archived" : ""}">
         <img src="${img}" alt="${name}" data-action="npaOpen" data-id="${actor.id}" data-tooltip="Open sheet">
         <div class="npa-main">
-          <h3>${name} ${realName}</h3>
+          <h3>${name} ${realName}</h3>${where ? `<div class="npa-wheres">${where}</div>` : ""}
           <div class="npa-row">
             <label>Attitude <select data-field="attitude" data-id="${actor.id}">${opts(r.attitude ?? "", [{ id: "", label: "Not set" }])}</select></label>
             <label data-tooltip="What the players see. Use this when someone hides how they feel.">Players see <select data-field="shown" data-id="${actor.id}">${opts(r.shown, [{ id: "same", label: "The same" }, UNKNOWN])}</select></label>
             <label class="npa-met"><input type="checkbox" data-action="npaMet" data-id="${actor.id}" ${r.met ? "checked" : ""}> Met</label>
             <button type="button" data-action="npaAnnounce" data-id="${actor.id}" data-tooltip="Post what the players see of this NPC to chat"><i class="fa-solid fa-bullhorn"></i> Announce</button>
+            <button type="button" data-action="npaArchive" data-id="${actor.id}" data-tooltip="${r.archived ? "Bring them back into the lists" : "Out of the story for now: move to Archived, attitude and notes kept"}"><i class="fa-solid ${r.archived ? "fa-box-open" : "fa-box-archive"}"></i> ${r.archived ? "Bring back" : "Archive"}</button>
           </div>
           ${r.shown !== "same" && r.met ? `<div class="npa-att npa-shown">Players see: <i class="fa-regular ${shown.icon}"></i> ${shown.label}${Object.keys(r.pcs).length ? ", and none of the per-character attitudes" : ""}</div>` : ""}
           ${this.#perCharacter(actor, r)}
+          <div class="npa-row npa-ident">
+            <label class="npa-group" data-tooltip="Players see the group">Group <input type="text" list="npa-group-list" data-field="group" data-id="${actor.id}" value="${esc(r.group)}" maxlength="${GROUP_MAX}" placeholder="None"></label>
+          </div>
           <div class="npa-row npa-ident">
             <label data-tooltip="The name players see. Empty: the prototype token name.">Known as <input type="text" data-field="knownAs" data-id="${actor.id}" value="${esc(r.knownAs)}" placeholder="${esc(actor.prototypeToken?.name?.trim() || actor.name)}"></label>
             <label data-tooltip="The image players see. Empty: the prototype token image.">Portrait <input type="text" data-field="portrait" data-id="${actor.id}" value="${esc(r.portrait)}" placeholder="${esc(actor.prototypeToken?.texture?.src || actor.img)}"><a data-action="npaPickPortrait" data-id="${actor.id}" data-tooltip="Pick an image"><i class="fa-solid fa-file-image"></i></a></label>
@@ -632,6 +718,7 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
     if (field === "knownAs") return setKnownAs(actor, target.value);
     if (field === "portrait") return update(actor, { portrait: target.value.trim() });
     if (field === "pc") return setTowards(actor, target.dataset.pc, target.value);
+    if (field === "group") return setGroup(actor, target.value);
   }
 
   async #submitNote(input) {
@@ -645,6 +732,24 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
   static #onFilter(event, target) {
     this.state.filter = target.dataset.id;
     this.render();
+  }
+
+  static #onViewGroup(event, target) {
+    this.state.view = target.dataset.view;
+    if (this.state.search) this.state.search = "";
+    saveChips(this.state);
+    this.render();
+  }
+
+  static #onSort() {
+    this.state.sort = this.state.sort === "recent" ? "name" : "recent";
+    saveChips(this.state);
+    this.render();
+  }
+
+  static async #onArchive(event, target) {
+    const actor = game.actors.get(target.dataset.id);
+    if (actor) await setArchived(actor, !record(actor).archived);
   }
 
   static #onChip(event, target) {
@@ -734,6 +839,9 @@ Hooks.once("init", () => {
     scope: "world", config: true, type: String, default: "all",
     choices: { all: "Everyone", gm: "Whisper to the GM", off: "Nobody (button disabled)" },
   });
+  game.settings.register(MOD, "groups", {
+    scope: "world", config: false, type: Array, default: [], onChange: () => refresh(),
+  });
   game.settings.register(MOD, "castFlagScopes", {
     name: "Cast flag scopes",
     hint: "Comma-separated module ids. An actor with flags.<id>.cast set counts as Cast for the Cast filter. Empty: the Cast chip shows no one.",
@@ -745,7 +853,8 @@ Hooks.once("ready", () => {
   game.socket.on(`module.${MOD}`, onSocket);
   game.modules.get(MOD).api = {
     open: () => PeopleApp.open(),
-    markMet, setAttitude, setTowards, setKnownAs, reveal, announce, addNote, knownName,
+    markMet, setAttitude, setTowards, setKnownAs, reveal, announce, addNote, knownName, setGroup, setArchived,
+    groups: () => (game.user.isGM ? groupNames() : [...new Set(game.actors.filter(isNPC).map((a) => record(a)).filter((r) => r.met && r.group).map((r) => r.group))]),
     record: (actor) => (game.user.isGM ? record(actor) : publicRecord(actor)),
   };
 });
