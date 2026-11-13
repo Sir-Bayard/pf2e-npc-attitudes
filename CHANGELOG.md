@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.1
+
+- A card's Group field is a menu: None, every group in your order, and New group... to name a new one. It was a text box whose suggestions showed only names matching what was already in it, so the other groups never appeared.
+
 ## 1.1.0
 
 - Groups and an archive, for when the cast grows. The People window has a sidebar: Everyone, each of your groups with a count, No group, and Archived. Put an NPC in a group from the card's Group field or by dragging the portrait onto a group; archive someone who has left the story, with their attitude and notes kept, and bring them back any time.

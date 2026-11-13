@@ -50,7 +50,7 @@ The window remembers its size and place, in each browser.
 
 The sidebar on the left lists **Everyone** (everyone not archived), each of your groups with how many are in it, **No group**, and **Archived** at the bottom.
 
-- **Groups**: one per NPC, named by you: a place, an arc, a faction ("Fenrusk", "The company"). Set it in a card's Group field, which suggests the groups you have, or drag the card's portrait onto a group in the sidebar. **New group** adds an empty one. Drag a group up or down the list to move it, or click **Sort A to Z**.
+- **Groups**: one per NPC, named by you: a place, an arc, a faction ("Greywatch", "The Ridge Road"). Pick it from a card's Group menu, which lists your groups and New group... to make one, or drag the card's portrait onto a group in the sidebar. **New group** adds an empty one. Drag a group up or down the list to move it, or click **Sort A to Z**.
 - **Archive** an NPC who has left the story (the Archive button on the card, or drag them onto Archived). Their attitude, per-character attitudes and notes are kept; **Bring back** (or dragging them onto Everyone) returns them to the lists.
 - With a group open, the bar above its cards has **Rename** (everyone in it follows; renaming to a group you already have merges the two, after asking), **Archive all**, **Bring back** for its archived people, and **Remove group** (its people keep their records, with no group).
 - The search box looks everywhere, the archive included; a card found that way shows its group and whether it's archived.
@@ -80,7 +80,7 @@ The real attitude and the "Players see" value live in the actor's flags, which F
 
 On each NPC actor, in `flags.pf2e-npc-attitudes.npc` (including its group and whether it's archived). Unlinked NPCs keep it on the actor in the sidebar, not on individual tokens. The order of the groups is the world setting `pf2e-npc-attitudes.groups`.
 
-Macros for groups: `api.setGroup(actor, "Fenrusk")`, `api.setArchived(actor, true)`, `api.groups()`, and `api.addGroup`, `api.renameGroup(from, to)`, `api.removeGroup`, `api.archiveGroup(name, archived)`, `api.moveGroup(name, beforeName)`, `api.sortGroups()`.
+Macros for groups: `api.setGroup(actor, "Greywatch")`, `api.setArchived(actor, true)`, `api.groups()`, and `api.addGroup`, `api.renameGroup(from, to)`, `api.removeGroup`, `api.archiveGroup(name, archived)`, `api.moveGroup(name, target, after)`, `api.sortGroups()`.
 
 ## Changes
 

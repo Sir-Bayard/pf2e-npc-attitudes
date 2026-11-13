@@ -673,7 +673,7 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
         <nav class="npa-filters">${filters}</nav>
         ${gm}
       </header>
-      <div class="npa-main-row">${this.sidebar()}<section class="npa-body">${this.groupBar()}<div class="npa-cards">${cards}</div></section>${this.isGM ? `<datalist id="npa-group-list">${groupNames().map((g) => `<option value="${esc(g)}">`).join("")}</datalist>` : ""}</div>`;
+      <div class="npa-main-row">${this.sidebar()}<section class="npa-body">${this.groupBar()}<div class="npa-cards">${cards}</div></section></div>`;
     return el;
   }
 
@@ -717,7 +717,7 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
           ${r.shown !== "same" && r.met ? `<div class="npa-att npa-shown">Players see: <i class="fa-regular ${shown.icon}"></i> ${shown.label}${Object.keys(r.pcs).length ? ", and none of the per-character attitudes" : ""}</div>` : ""}
           ${this.#perCharacter(actor, r)}
           <div class="npa-row npa-ident">
-            <label class="npa-group" data-tooltip="Players see the group">Group <input type="text" list="npa-group-list" data-field="group" data-id="${actor.id}" value="${esc(r.group)}" maxlength="${GROUP_MAX}" placeholder="None"></label>
+            <label class="npa-group" data-tooltip="Players see the group">Group <select data-field="group" data-id="${actor.id}">${this.#groupOptions(r.group)}</select></label>
           </div>
           <div class="npa-row npa-ident">
             <label data-tooltip="The name players see. Empty: the prototype token name.">Known as <input type="text" data-field="knownAs" data-id="${actor.id}" value="${esc(r.knownAs)}" placeholder="${esc(actor.prototypeToken?.name?.trim() || actor.name)}"></label>
@@ -889,7 +889,21 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
     if (field === "knownAs") return setKnownAs(actor, target.value);
     if (field === "portrait") return update(actor, { portrait: target.value.trim() });
     if (field === "pc") return setTowards(actor, target.dataset.pc, target.value);
-    if (field === "group") return setGroup(actor, target.value);
+    if (field === "group") {
+      if (!target.selectedOptions[0]?.dataset.new) return setGroup(actor, target.value);
+      const name = await PeopleApp.#askName("New group", "Name");
+      const group = name === null ? "" : await addGroup(name);
+      if (group) return setGroup(actor, group);
+      target.value = record(actor).group;
+    }
+  }
+
+  /** The Group menu: no group, every group in the GM's order, then a way to make a new one. */
+  #groupOptions(current) {
+    const names = groupNames();
+    if (current && !names.includes(current)) names.push(current);
+    const opt = (value, label) => `<option value="${esc(value)}" ${value === current ? "selected" : ""}>${esc(label)}</option>`;
+    return `${opt("", "None")}${names.map((g) => opt(g, g)).join("")}<option value="" data-new="1">New group...</option>`;
   }
 
   async #submitNote(input) {
