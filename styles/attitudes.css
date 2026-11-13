@@ -26,6 +26,14 @@
 .npa-app .npa-wheres { display: flex; flex-wrap: wrap; gap: 6px; font-size: 11px; opacity: 0.7; }
 .npa-app .npa-card.npa-archived { opacity: 0.85; }
 .npa-app .npa-group input[type="text"] { width: 180px; }
+.npa-app .npa .npa-side a.npa-new { margin-top: 6px; opacity: 0.65; font-size: 12px; }
+.npa-app .npa .npa-side a.npa-drop-over { outline: 1px dashed currentColor; background: rgba(255, 255, 255, 0.12); }
+.npa-app .npa-groupbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 8px; }
+.npa-app .npa-groupbar strong { font-size: 14px; margin-right: 6px; }
+.npa-app .npa-groupbar button { width: auto; flex: 0 0 auto; padding: 0 8px; line-height: 24px; font-size: 12px; }
+.npa-app .npa-card > img[draggable="true"] { cursor: grab; }
+.npa-dialog .npa-ask { display: flex; align-items: center; gap: 8px; }
+.npa-dialog .npa-ask input, .npa-dialog .npa-ask select { flex: 1; }
 .npa-app .npa-empty { opacity: 0.7; font-style: italic; }
 .npa-app .npa-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 10px; }
 

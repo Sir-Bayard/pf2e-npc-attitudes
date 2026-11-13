@@ -108,6 +108,47 @@ async function setGroup(actor, name) {
   await update(actor, { group });
 }
 
+/** The NPC actors in a group, archived or not. */
+const groupMembers = (name) => game.actors.filter((a) => isNPC(a) && record(a).group === name);
+
+/** Change several NPCs' records in one go. */
+async function updateMany(actors, changes) {
+  const updates = actors.map((a) => ({ _id: a.id, ...Object.fromEntries(Object.entries(changes).map(([k, v]) => [`flags.${MOD}.${FLAG}.${k}`, v])) }));
+  if (updates.length) await Actor.implementation.updateDocuments(updates);
+}
+
+/** Add an empty group to the list. Returns the cleaned name, or "" when there was none. */
+async function addGroup(name) {
+  const group = cleanGroup(name);
+  if (!game.user.isGM || !group) return "";
+  const list = game.settings.get(MOD, "groups") ?? [];
+  if (!list.includes(group)) await game.settings.set(MOD, "groups", [...list, group]);
+  return group;
+}
+
+/** Rename a group, in the list (keeping its place) and on every NPC in it. A name already in use merges the two. */
+async function renameGroup(from, to) {
+  const group = cleanGroup(to);
+  if (!game.user.isGM || !group || group === from) return "";
+  const list = groupNames();
+  await game.settings.set(MOD, "groups", [...new Set(list.map((g) => (g === from ? group : g)))]);
+  await updateMany(groupMembers(from), { group });
+  return group;
+}
+
+/** Take a group off the list; its NPCs keep their records but no longer have a group. */
+async function removeGroup(name) {
+  if (!game.user.isGM) return;
+  await updateMany(groupMembers(name), { group: "" });
+  await game.settings.set(MOD, "groups", groupNames().filter((g) => g !== name));
+}
+
+/** Archive or bring back everyone in a group. */
+async function archiveGroup(name, archived = true) {
+  if (!game.user.isGM) return;
+  await updateMany(groupMembers(name).filter((a) => record(a).archived !== archived), { archived });
+}
+
 /** Archive an NPC (out of the story for now, still on record) or bring them back. */
 async function setArchived(actor, archived = true) {
   if (!game.user.isGM || !isNPC(actor)) return;
@@ -289,6 +330,8 @@ async function announce(actor) {
 const openApps = new Set();
 let refreshTimer = null;
 const TYPING = "textarea, input[type=text], input[type=search], select";
+/** The drag data type of a card dragged by its portrait. */
+const NPC_DRAG = "application/x-npa-npc";
 function refresh() {
   clearTimeout(refreshTimer);
   refreshTimer = setTimeout(() => {
@@ -482,6 +525,11 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
       npaView: PeopleApp.#onViewGroup,
       npaSort: PeopleApp.#onSort,
       npaArchive: PeopleApp.#onArchive,
+      npaNewGroup: PeopleApp.#onNewGroup,
+      npaRenameGroup: PeopleApp.#onRenameGroup,
+      npaArchiveGroup: PeopleApp.#onArchiveGroup,
+      npaRestoreGroup: PeopleApp.#onRestoreGroup,
+      npaRemoveGroup: PeopleApp.#onRemoveGroup,
       npaChip: PeopleApp.#onChip,
       npaMarkSelected: PeopleApp.#onMarkSelected,
       npaMet: PeopleApp.#onMet,
@@ -540,15 +588,33 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
     const active = all.filter(({ r }) => !r.archived);
     const count = (fn) => active.filter(({ r }) => fn(r)).length;
     const names = this.isGM ? groupNames() : [...new Set(all.map(({ r }) => r.group).filter(Boolean))].filter((g) => count((r) => r.group === g));
-    const row = (view, label, n, icon = "") => `<a data-action="npaView" data-view="${esc(view)}" class="${this.state.view === view ? "active" : ""}">${icon ? `<i class="fa-solid ${icon}"></i> ` : ""}<span>${esc(label)}</span><em>${n}</em></a>`;
+    const row = (view, label, n, icon = "") => `<a data-action="npaView" data-view="${esc(view)}" ${this.isGM ? `data-drop-view="${esc(view)}"` : ""} class="${this.state.view === view ? "active" : ""}">${icon ? `<i class="fa-solid ${icon}"></i> ` : ""}<span>${esc(label)}</span><em>${n}</em></a>`;
     const none = count((r) => !r.group);
     const archived = all.filter(({ r }) => r.archived).length;
     return `<nav class="npa-side">
         ${row("all", "Everyone", active.length)}
         ${names.map((g) => row(`group:${g}`, g, count((r) => r.group === g))).join("")}
-        ${none && names.length ? row("none", "No group", none) : ""}
+        ${(none || this.isGM) && names.length ? row("none", "No group", none) : ""}
         ${archived || this.isGM ? `<hr>${row("archived", "Archived", archived, "fa-box-archive")}` : ""}
+        ${this.isGM ? `<a data-action="npaNewGroup" class="npa-new"><i class="fa-solid fa-plus"></i> <span>New group</span></a>` : ""}
       </nav>`;
+  }
+
+  /** The GM's tools for the open group. */
+  groupBar() {
+    const v = this.state.view;
+    if (!this.isGM || !v.startsWith("group:") || this.state.search.trim()) return "";
+    const name = v.slice(6);
+    const members = groupMembers(name);
+    const archived = members.filter((a) => record(a).archived).length;
+    const active = members.length - archived;
+    const b = (action, icon, label, tip) => `<button type="button" data-action="${action}" data-tooltip="${esc(tip)}"><i class="fa-solid ${icon}"></i> ${label}</button>`;
+    return `<div class="npa-groupbar"><strong>${esc(name)}</strong>
+        ${b("npaRenameGroup", "fa-pen", "Rename", "Rename the group for everyone in it")}
+        ${active ? b("npaArchiveGroup", "fa-box-archive", "Archive all", `Archive the ${active} ${active === 1 ? "person" : "people"} in this group`) : ""}
+        ${archived ? b("npaRestoreGroup", "fa-box-open", `Bring back ${archived}`, "Bring back this group's archived people") : ""}
+        ${b("npaRemoveGroup", "fa-trash", "Remove group", "Take the group off the list; its people keep their records")}
+      </div>`;
   }
 
   async _renderHTML() {
@@ -578,7 +644,7 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
         <nav class="npa-filters">${filters}</nav>
         ${gm}
       </header>
-      <div class="npa-main-row">${this.sidebar()}<section class="npa-body"><div class="npa-cards">${cards}</div></section>${this.isGM ? `<datalist id="npa-group-list">${groupNames().map((g) => `<option value="${esc(g)}">`).join("")}</datalist>` : ""}</div>`;
+      <div class="npa-main-row">${this.sidebar()}<section class="npa-body">${this.groupBar()}<div class="npa-cards">${cards}</div></section>${this.isGM ? `<datalist id="npa-group-list">${groupNames().map((g) => `<option value="${esc(g)}">`).join("")}</datalist>` : ""}</div>`;
     return el;
   }
 
@@ -609,7 +675,7 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
     const opts = (sel, extra = []) => [...extra, ...ATTITUDES].map((a) => `<option value="${a.id}" ${a.id === sel ? "selected" : ""}>${a.label}</option>`).join("");
     const realName = actor.name !== knownName(actor) ? `<span class="npa-real" data-tooltip="The actor's name, GM only">${esc(actor.name)}</span>` : "";
     return `<article class="npa-card att-${truth.id} ${r.met ? "" : "npa-unmet"} ${r.archived ? "npa-archived" : ""}">
-        <img src="${img}" alt="${name}" data-action="npaOpen" data-id="${actor.id}" data-tooltip="Open sheet">
+        <img src="${img}" alt="${name}" data-action="npaOpen" data-id="${actor.id}" draggable="true" data-drag-npc="${actor.id}" data-tooltip="Click: open the sheet. Drag onto a group in the list.">
         <div class="npa-main">
           <h3>${name} ${realName}</h3>${where ? `<div class="npa-wheres">${where}</div>` : ""}
           <div class="npa-row">
@@ -672,6 +738,45 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
 
   _onFirstRender() {
     openApps.add(this);
+    // The GM drags a card by its portrait onto a sidebar row: a group, No group, Everyone (bring back) or Archived.
+    this.element.addEventListener("dragstart", (ev) => {
+      const img = ev.target.closest?.("[data-drag-npc]");
+      if (!img || !game.user.isGM) return;
+      ev.dataTransfer.setData(NPC_DRAG, img.dataset.dragNpc);
+      ev.dataTransfer.effectAllowed = "move";
+    });
+    const zoneOf = (ev) => (ev.dataTransfer?.types?.includes(NPC_DRAG) ? ev.target.closest?.("[data-drop-view]") : null);
+    this.element.addEventListener("dragover", (ev) => {
+      const zone = zoneOf(ev);
+      if (!zone) return;
+      ev.preventDefault();
+      ev.dataTransfer.dropEffect = "move";
+      if (this._dropZone !== zone) {
+        this._dropZone?.classList.remove("npa-drop-over");
+        zone.classList.add("npa-drop-over");
+        this._dropZone = zone;
+      }
+    });
+    this.element.addEventListener("dragleave", (ev) => {
+      if (this._dropZone && !this._dropZone.contains(ev.relatedTarget)) {
+        this._dropZone.classList.remove("npa-drop-over");
+        this._dropZone = null;
+      }
+    });
+    this.element.addEventListener("drop", async (ev) => {
+      this._dropZone?.classList.remove("npa-drop-over");
+      this._dropZone = null;
+      const zone = zoneOf(ev);
+      if (!zone) return;
+      ev.preventDefault();
+      const actor = game.actors.get(ev.dataTransfer.getData(NPC_DRAG));
+      if (!actor || !game.user.isGM) return;
+      const view = zone.dataset.dropView;
+      if (view === "archived") return setArchived(actor, true);
+      if (view === "all") return setArchived(actor, false);
+      if (view === "none") return setGroup(actor, "");
+      if (view.startsWith("group:")) return setGroup(actor, view.slice(6));
+    });
   }
 
   _onClose() {
@@ -747,6 +852,67 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
     this.render();
   }
 
+  /** Ask for a group name; resolves to the text, or null when canceled. */
+  static async #askName(title, label, value = "") {
+    const out = await foundry.applications.api.DialogV2.prompt({
+      window: { title },
+      classes: ["npa-dialog"],
+      content: `<label class="npa-ask">${esc(label)} <input type="text" name="name" value="${esc(value)}" maxlength="${GROUP_MAX}" autofocus></label>`,
+      ok: { label: "Save", callback: (ev, button) => button.form.elements.name.value },
+      rejectClose: false,
+    });
+    return typeof out === "string" ? out : null;
+  }
+
+  static async #onNewGroup() {
+    const name = await PeopleApp.#askName("New group", "Name");
+    if (name === null) return;
+    const group = await addGroup(name);
+    if (group) {
+      this.state.view = `group:${group}`;
+      saveChips(this.state);
+      this.render();
+    }
+  }
+
+  static async #onRenameGroup() {
+    const from = this.state.view.slice(6);
+    const name = await PeopleApp.#askName("Rename group", "Name", from);
+    if (name === null) return;
+    const to = cleanGroup(name);
+    if (!to || to === from) return;
+    if (groupNames().includes(to)) {
+      const ok = await foundry.applications.api.DialogV2.confirm({ window: { title: "Rename group" }, content: `<p>There's already a group called <strong>${esc(to)}</strong>. Put everyone in <strong>${esc(from)}</strong> into it?</p>` });
+      if (!ok) return;
+    }
+    await renameGroup(from, to);
+    this.state.view = `group:${to}`;
+    saveChips(this.state);
+    this.render();
+  }
+
+  static async #onArchiveGroup() {
+    const name = this.state.view.slice(6);
+    const n = groupMembers(name).filter((a) => !record(a).archived).length;
+    const ok = await foundry.applications.api.DialogV2.confirm({ window: { title: "Archive group" }, content: `<p>Archive the ${n} ${n === 1 ? "person" : "people"} in <strong>${esc(name)}</strong>? Their attitudes and notes are kept, and you can bring them back.</p>` });
+    if (ok) await archiveGroup(name, true);
+  }
+
+  static async #onRestoreGroup() {
+    await archiveGroup(this.state.view.slice(6), false);
+  }
+
+  static async #onRemoveGroup() {
+    const name = this.state.view.slice(6);
+    const n = groupMembers(name).length;
+    const ok = await foundry.applications.api.DialogV2.confirm({ window: { title: "Remove group" }, content: `<p>Remove the group <strong>${esc(name)}</strong>?${n ? ` The ${n} ${n === 1 ? "person" : "people"} in it keep their records, with no group.` : ""}</p>` });
+    if (!ok) return;
+    await removeGroup(name);
+    this.state.view = "all";
+    saveChips(this.state);
+    this.render();
+  }
+
   static async #onArchive(event, target) {
     const actor = game.actors.get(target.dataset.id);
     if (actor) await setArchived(actor, !record(actor).archived);
@@ -772,9 +938,27 @@ class PeopleApp extends rememberWindow(foundry.applications.api.ApplicationV2, `
       seeds.set(actor, name && name !== actor.prototypeToken?.name?.trim() && !record(actor).knownAs ? name : "");
     }
     if (!seeds.size) return ui.notifications.warn(skipped ? "The selected tokens' actors no longer exist in the sidebar." : "Select one or more NPC tokens first.");
+    // Offer the existing groups; leaving it as is keeps each one's group.
+    const names = groupNames();
+    let group = null;
+    if (names.length) {
+      const pick = await foundry.applications.api.DialogV2.wait({
+        window: { title: "Mark as met" },
+        classes: ["npa-dialog"],
+        content: `<label class="npa-ask">Put ${seeds.size === 1 ? "them" : `all ${seeds.size}`} in <select name="group"><option value="__keep">their group as it is</option><option value="">no group</option>${names.map((g) => `<option value="${esc(g)}">${esc(g)}</option>`).join("")}</select></label>`,
+        buttons: [
+          { action: "ok", label: "Mark as met", icon: "fa-solid fa-user-plus", default: true, callback: (ev, button) => button.form.elements.group.value },
+          { action: "cancel", label: "Cancel" },
+        ],
+        rejectClose: false,
+      });
+      if (pick === null || pick === "cancel" || pick === undefined) return;
+      if (pick !== "__keep") group = pick;
+    }
     for (const [actor, knownAs] of seeds) {
       await markMet(actor, true);
       if (knownAs) await setKnownAs(actor, knownAs);
+      if (group !== null) await setGroup(actor, group);
     }
     ui.notifications.info(`Marked ${seeds.size} as met.${skipped ? ` Skipped ${skipped} whose actor no longer exists.` : ""}`);
   }
@@ -853,7 +1037,7 @@ Hooks.once("ready", () => {
   game.socket.on(`module.${MOD}`, onSocket);
   game.modules.get(MOD).api = {
     open: () => PeopleApp.open(),
-    markMet, setAttitude, setTowards, setKnownAs, reveal, announce, addNote, knownName, setGroup, setArchived,
+    markMet, setAttitude, setTowards, setKnownAs, reveal, announce, addNote, knownName, setGroup, setArchived, addGroup, renameGroup, removeGroup, archiveGroup,
     groups: () => (game.user.isGM ? groupNames() : [...new Set(game.actors.filter(isNPC).map((a) => record(a)).filter((r) => r.met && r.group).map((r) => r.group))]),
     record: (actor) => (game.user.isGM ? record(actor) : publicRecord(actor)),
   };
