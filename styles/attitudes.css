@@ -2,53 +2,72 @@
 
 .application.npa-app .window-content { padding: 0; display: flex; flex-direction: column; overflow: hidden; }
 .npa-app .npa { display: flex; flex-direction: column; height: 100%; min-height: 0; font-size: 13px; }
-.npa-app .npa a { cursor: pointer; text-decoration: none; text-transform: none; flex: 0 0 auto; }
 .npa-app .npa i { position: static; display: inline-block; width: auto; }
 .npa-app .npa span, .npa-app .npa strong { overflow: visible; text-overflow: clip; white-space: normal; flex: initial; }
 .npa-app .npa label { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font-size: 12px; }
 
+/* Buttons that read as text or pills, not Foundry's full buttons. */
+.npa-app .npa :is(.npa-pill, .npa-plain, .npa-side-row, .npa-sort) {
+  width: auto; height: auto; min-height: 0; flex: 0 0 auto; margin: 0; line-height: 1.4; font: inherit; color: inherit;
+  background: none; border: none; box-shadow: none; text-align: left; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;
+}
+.npa-app .npa .npa-plain { padding: 0 4px; opacity: 0.75; text-decoration: underline; text-underline-offset: 2px; }
+.npa-app .npa .npa-plain:hover { opacity: 1; }
+
 .npa-app .npa-head { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--color-border, #7a7971); }
 .npa-app .npa-head input[type="search"] { width: 200px; flex: 0 0 auto; }
+.npa-app .npa .npa-sort { padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(127, 127, 127, 0.35); font-size: 12px; }
 .npa-app .npa-filters { display: flex; flex-wrap: wrap; gap: 4px; }
-.npa-app .npa .npa-filters a { padding: 2px 8px; border-radius: 10px; border: 1px solid rgba(127, 127, 127, 0.35); opacity: 0.8; }
-.npa-app .npa .npa-filters a.active { opacity: 1; font-weight: 600; background: rgba(255, 255, 255, 0.1); }
+.npa-app .npa .npa-pill { padding: 2px 8px; border-radius: 10px; border: 1px solid rgba(127, 127, 127, 0.35); opacity: 0.8; }
+.npa-app .npa .npa-pill[aria-pressed="true"] { opacity: 1; font-weight: 600; background: rgba(255, 255, 255, 0.1); }
 .npa-app .npa-gm { display: flex; gap: 12px; align-items: center; margin-left: auto; }
-.npa-app .npa-gm button { width: auto; flex: 0 0 auto; padding: 0 8px; line-height: 26px; }
+.npa-app .npa-gm > button { width: auto; flex: 0 0 auto; padding: 0 8px; line-height: 26px; }
 
 .npa-app .npa-main-row { flex: 1; min-height: 0; display: flex; }
 .npa-app .npa-side { flex: 0 0 150px; overflow: auto; padding: 8px 6px; border-right: 1px solid rgba(127, 127, 127, 0.35); display: flex; flex-direction: column; gap: 2px; }
-.npa-app .npa .npa-side a { display: flex; align-items: center; gap: 6px; padding: 3px 8px; border-radius: 4px; opacity: 0.85; }
-.npa-app .npa .npa-side a span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.npa-app .npa .npa-side a em { font-style: normal; font-size: 11px; opacity: 0.6; }
-.npa-app .npa .npa-side a.active { opacity: 1; font-weight: 600; background: rgba(255, 255, 255, 0.1); }
+.npa-app .npa .npa-side-row { display: flex; width: 100%; padding: 3px 8px; border-radius: 4px; opacity: 0.85; gap: 6px; }
+.npa-app .npa .npa-side-row span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.npa-app .npa .npa-side-row em { font-style: normal; font-size: 11px; opacity: 0.6; }
+.npa-app .npa .npa-side-row .npa-side-att { opacity: 0.7; font-size: 11px; }
+.npa-app .npa .npa-side-row.active { opacity: 1; font-weight: 600; background: rgba(255, 255, 255, 0.1); }
 .npa-app .npa-side hr { width: 100%; margin: 6px 0; border: none; border-top: 1px solid rgba(127, 127, 127, 0.35); }
+.npa-app .npa .npa-side-row.npa-new { margin-top: 6px; opacity: 0.65; font-size: 12px; }
+.npa-app .npa .npa-side-row[draggable="true"] { cursor: grab; }
+.npa-app .npa .npa-side-row.npa-drop-before { box-shadow: inset 0 2px 0 currentColor; }
+.npa-app .npa .npa-side-row.npa-drop-after { box-shadow: inset 0 -2px 0 currentColor; }
+.npa-app .npa .npa-side-row.npa-drop-over { outline: 1px dashed currentColor; background: rgba(255, 255, 255, 0.12); }
 .npa-app .npa-body { flex: 1; min-height: 0; min-width: 0; overflow: auto; padding: 10px 12px 16px; }
 .npa-app .npa-wheres { display: flex; flex-wrap: wrap; gap: 6px; font-size: 11px; opacity: 0.7; }
+.npa-app .npa-where { font-size: 11px; opacity: 0.7; }
 .npa-app .npa-card.npa-archived { opacity: 0.85; }
-.npa-app .npa .npa-side a.npa-new { margin-top: 6px; opacity: 0.65; font-size: 12px; }
-.npa-app .npa .npa-side a[draggable="true"] { cursor: grab; }
-.npa-app .npa .npa-side a.npa-drop-before { box-shadow: inset 0 2px 0 currentColor; }
-.npa-app .npa .npa-side a.npa-drop-after { box-shadow: inset 0 -2px 0 currentColor; }
-.npa-app .npa .npa-side a.npa-drop-over { outline: 1px dashed currentColor; background: rgba(255, 255, 255, 0.12); }
-.npa-app .npa-groupbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 8px; }
+.npa-app .npa-groupbar, .npa-app .npa-bulk { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 8px; }
 .npa-app .npa-groupbar strong { font-size: 14px; margin-right: 6px; }
-.npa-app .npa-groupbar button { width: auto; flex: 0 0 auto; padding: 0 8px; line-height: 24px; font-size: 12px; }
-.npa-app .npa-card > img[data-action][draggable="true"] { cursor: grab; }
-.npa-dialog .npa-ask { display: flex; align-items: center; gap: 8px; }
+.npa-app .npa-groupbar button, .npa-app .npa-bulk button { width: auto; flex: 0 0 auto; padding: 0 8px; line-height: 24px; font-size: 12px; }
+.npa-app .npa-bulk { padding: 6px 8px; border: 1px dashed rgba(127, 127, 127, 0.5); border-radius: 6px; }
+.npa-app .npa-bulk select { width: auto; max-width: 180px; }
+.npa-app .npa-card > img[draggable="true"] { cursor: grab; }
+.npa-dialog .npa-ask { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
 .npa-dialog .npa-ask input, .npa-dialog .npa-ask select { flex: 1; }
+.npa-dialog .npa-hint { font-size: 12px; opacity: 0.8; margin: 4px 0 8px; }
+.npa-dialog .npa-tiers .npa-ask { display: grid; grid-template-columns: 10em 1fr; }
+.npa-dialog .npa-tiers .npa-ask em { font-size: 11px; opacity: 0.7; }
+.npa-dialog .npa-impress-list { display: flex; flex-direction: column; gap: 2px; max-height: 220px; overflow: auto; }
+.npa-dialog fieldset { margin: 6px 0; }
 .npa-app .npa-empty { opacity: 0.7; font-style: italic; }
 .npa-app .npa-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr)); gap: 10px; }
 
-.npa-app .npa-card { --att: #8a8a8a; display: flex; gap: 10px; padding: 8px; border: 1px solid rgba(127, 127, 127, 0.35); border-left: 4px solid var(--att); border-radius: 6px; }
+.npa-app .npa-card { --att: #8a8a8a; position: relative; display: flex; gap: 10px; padding: 8px; border: 1px solid rgba(127, 127, 127, 0.35); border-left: 4px solid var(--att); border-radius: 6px; }
 .npa-app .npa-card.att-hostile { --att: #b33a3a; }
 .npa-app .npa-card.att-unfriendly { --att: #c06a2b; }
 .npa-app .npa-card.att-indifferent { --att: #8a8a8a; }
 .npa-app .npa-card.att-friendly { --att: #4f8a4b; }
 .npa-app .npa-card.att-helpful { --att: #3f7fa8; }
 .npa-app .npa-card.att-unknown { --att: rgba(127, 127, 127, 0.35); }
-.npa-app .npa-card.npa-unmet { opacity: 0.6; border-style: dashed; }
-.npa-app .npa-card > img { width: 96px; height: 120px; object-fit: cover; object-position: top; border-radius: 4px; border: none; flex: 0 0 96px; cursor: default; }
-.npa-app .npa-card > img[data-action] { cursor: pointer; }
+.npa-app .npa-card.npa-unmet { opacity: 0.75; border-style: dashed; }
+.npa-app .npa-card.npa-flash { animation: npa-flash 1.6s ease-out 1; }
+@keyframes npa-flash { from { box-shadow: 0 0 0 3px var(--att); } to { box-shadow: 0 0 0 0 transparent; } }
+.npa-app .npa-card > .npa-select { position: absolute; top: 4px; left: 4px; z-index: 1; margin: 0; }
+.npa-app .npa-card > img { width: 96px; height: 120px; object-fit: cover; object-position: top; border-radius: 4px; border: none; flex: 0 0 96px; cursor: pointer; }
 .npa-app .npa-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
 .npa-app .npa-main h3 { margin: 0; font-size: 15px; border: none; line-height: 1.2; }
 .npa-app .npa .npa-real { font-size: 11px; font-weight: normal; opacity: 0.6; font-style: italic; }
@@ -64,17 +83,33 @@
 .npa-app .npa .npa-note-list li { padding: 2px 0; border-bottom: 1px dotted rgba(127, 127, 127, 0.3); }
 .npa-app .npa .npa-note-list li:last-child { border-bottom: none; }
 .npa-app .npa .npa-note-list strong { opacity: 0.8; margin-right: 4px; }
-.npa-app .npa .npa-note-list a { opacity: 0.5; margin-left: 4px; }
-.npa-app .npa .npa-note-list a:hover { opacity: 1; }
+.npa-app .npa .npa-note-del { opacity: 0.5; margin-left: 4px; text-decoration: none; }
+.npa-app .npa .npa-note-del:hover, .npa-app .npa .npa-note-del:focus-visible { opacity: 1; }
 .npa-app .npa-note-add { display: flex; gap: 4px; }
 .npa-app .npa-note-add input { flex: 1; min-width: 0; font-size: 12px; }
 .npa-app .npa-note-add button { width: auto; flex: 0 0 auto; padding: 0 8px; }
 
-/* GM only: the name and portrait players see, and the Announce button */
+/* GM only: the card's buttons, the Edit fold, the history and this scene's attitudes */
 .npa-app .npa-row button { width: auto; flex: 0 0 auto; padding: 0 8px; line-height: 24px; font-size: 12px; }
 .npa-app .npa-ident label { flex: 1 1 45%; min-width: 0; }
 .npa-app .npa-ident input[type="text"], .npa-app .npa-ident select { flex: 1; min-width: 0; }
-.npa-app .npa .npa-ident a { padding: 0 4px; }
+.npa-app :is(.npa-edit, .npa-hist, .npa-per) summary { cursor: pointer; font-size: 12px; opacity: 0.85; }
+.npa-app .npa :is(.npa-hist, .npa-per) summary span { opacity: 0.8; font-style: italic; }
+.npa-app .npa-edit[open] { display: flex; flex-direction: column; gap: 4px; padding: 4px 0 2px; }
+.npa-app .npa-hist-list { margin: 2px 0; padding-left: 18px; font-size: 12px; }
+.npa-app .npa-hist-met { margin: 2px 0; font-size: 12px; opacity: 0.8; }
+.npa-app .npa .npa-hist-real { font-size: 11px; opacity: 0.65; }
+.npa-app .npa .npa-why { display: flex; width: 100%; margin: 2px 0; }
+.npa-app .npa .npa-why input { flex: 1; min-width: 0; font-size: 12px; }
+.npa-app .npa-scene { font-size: 12px; padding: 2px 6px; border-radius: 4px; background: rgba(127, 127, 127, 0.15); }
+
+/* The unmet, one line each */
+.npa-app .npa-unmet { margin-top: 14px; }
+.npa-app .npa-unmet h4 { margin: 0 0 6px; font-size: 13px; opacity: 0.8; border: none; }
+.npa-app .npa-unmet-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 2px; }
+.npa-app .npa-unmet-row { display: flex; align-items: center; gap: 10px; padding: 2px 6px; border-bottom: 1px dotted rgba(127, 127, 127, 0.3); }
+.npa-app .npa-unmet-name { flex: 1; min-width: 0; }
+.npa-app .npa-unmet-open { padding: 4px 0; }
 
 .npa-chat i { opacity: 0.8; margin-right: 4px; }
 
@@ -87,11 +122,17 @@
 .npa-app .npa-pc.att-friendly { --att: #4f8a4b; }
 .npa-app .npa-pc.att-helpful { --att: #3f7fa8; }
 .theme-light .npa-app .npa .npa-pc, .npa-app.theme-light .npa .npa-pc { color: color-mix(in srgb, var(--att) 80%, black); }
-.npa-app .npa-per summary { cursor: pointer; font-size: 12px; opacity: 0.85; }
-.npa-app .npa .npa-per summary span { opacity: 0.8; font-style: italic; }
 .npa-app .npa-per-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 4px 10px; padding: 4px 0 2px; }
 .npa-app .npa-per-grid label { justify-content: space-between; }
 .npa-app .npa-per-grid select { max-width: 110px; }
+
+/* The GM's Apply panel on a Make an Impression chat card */
+.npa-impression-apply { margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(127, 127, 127, 0.5); font-size: 12px; }
+.npa-impression-apply p { margin: 0 0 4px; font-weight: 600; }
+.npa-impression-apply ul { margin: 0; padding-left: 16px; }
+.npa-impression-apply .npa-apply { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin: 2px 0 4px; }
+.npa-impression-apply .npa-apply button { width: auto; flex: 0 0 auto; padding: 0 6px; line-height: 20px; font-size: 11px; }
+.npa-impression-apply .npa-apply label { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; }
 
 /* Placeholder text: some UI themes draw it dark gray on the brown field, which can't be read. */
 .npa-app textarea::placeholder, .npa-app input::placeholder { color: currentColor; opacity: 0.55; font-style: italic; }

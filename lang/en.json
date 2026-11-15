@@ -1,0 +1,260 @@
+{
+  "NPA": {
+    "Title": "People",
+    "Unknown": "Unknown",
+    "Search": "Search names",
+    "Save": "Save",
+    "Cancel": "Cancel",
+    "MarkSelected": "Mark selected tokens as met",
+    "Filter": {
+      "All": "All",
+      "Label": "Show attitude"
+    },
+    "Chips": {
+      "Label": "GM filters",
+      "MetOnly": "Met only",
+      "MetOnlyTip": "Hide NPCs the party hasn't met",
+      "Cast": "Cast",
+      "CastTip": "Only actors marked as Cast by the module named in the Cast flag scopes setting",
+      "Select": "Select",
+      "SelectTip": "Tick several cards to change them together"
+    },
+    "Sort": {
+      "Name": "A to Z",
+      "Recent": "Recent",
+      "NameTip": "Sorted A to Z. Click for most recently met first.",
+      "RecentTip": "Sorted by who was met most recently. Click for A to Z."
+    },
+    "Empty": {
+      "GMMetOnly": "Nobody marked as met yet. Turn off Met only to start, or select tokens and mark them.",
+      "Player": "The party hasn't met anyone yet.",
+      "NoOne": "No one here."
+    },
+    "Side": {
+      "Label": "Groups",
+      "Everyone": "Everyone",
+      "NoGroup": "No group",
+      "Archived": "Archived",
+      "NewGroup": "New group",
+      "Sort": "Sort A to Z",
+      "SortTip": "Drag a group to move it, or use Move up and Move down with the group open"
+    },
+    "Group": {
+      "Name": "Name",
+      "None": "None",
+      "New": "New group...",
+      "MoveUp": "Move this group up",
+      "MoveDown": "Move this group down",
+      "Rename": "Rename",
+      "RenameTip": "Rename the group for everyone in it",
+      "RenameTitle": "Rename group",
+      "MergeAsk": "There's already a group called {to}. Put everyone in {from} into it?",
+      "ArchiveAll": "Archive all",
+      "ArchiveTip": "Archive the {n} people in this group",
+      "ArchiveTipHidden": "Archive the {n} people in this group ({hidden} of them hidden by your filters)",
+      "ArchiveTitle": "Archive group",
+      "ArchiveAsk": "Archive the {n} people in {name}? Their attitudes and notes are kept, and you can bring them back.",
+      "BringBack": "Bring back {n}",
+      "BringBackTip": "Bring back this group's archived people",
+      "Remove": "Remove group",
+      "RemoveTip": "Take the group off the list; its people keep their records",
+      "RemoveTitle": "Remove group",
+      "RemoveAsk": "Remove the group {name}?",
+      "RemoveAskPeople": "Remove the group {name}? The {n} people in it keep their records, with no group.",
+      "AttitudeTip": "The attitude members whose own attitude isn't set take: the group's own, or a Campaign Trackers reputation's",
+      "NoAttitude": "Group attitude",
+      "Own": "Group attitude: {attitude}",
+      "FromTracker": "{attitude} ({tracker}: {tier})"
+    },
+    "GroupDialog": {
+      "Title": "Group attitude: {name}",
+      "Hint": "Members whose own attitude is Not set take this one. A member with an attitude of their own keeps it.",
+      "Own": "Attitude",
+      "Follow": "Follow a reputation",
+      "NoTracker": "None",
+      "TierHint": "While the group follows a reputation, its current tier gives the attitude (the group's own is used when the reputation can't be read). Each tier starts with a guess by its place; change any of them.",
+      "NoTrackers": "With PF2e Campaign Trackers on, a group can also follow one of its reputations.",
+      "Now": "(now)",
+      "Missing": "(not found)"
+    },
+    "Bulk": {
+      "Label": "Change the ticked cards",
+      "Count": "{n} ticked",
+      "All": "Tick all {n} shown",
+      "GroupLabel": "Group for the ticked cards",
+      "PutInGroup": "Put in group",
+      "Met": "Mark met",
+      "Archive": "Archive",
+      "Restore": "Bring back",
+      "Clear": "Clear ticks",
+      "SelectOne": "Tick {name}",
+      "Done": "Changed {n}."
+    },
+    "Unmet": {
+      "Heading": "Not met yet ({n})",
+      "Open": "Card",
+      "MetLabel": "Met: {name}",
+      "More": "{n} more not shown. Search to narrow the list.",
+      "Fold": "Fold to a line"
+    },
+    "Card": {
+      "Attitude": "Attitude",
+      "NotSet": "Not set",
+      "NotSetGroup": "Not set (group: {attitude})",
+      "PlayersSee": "Players see",
+      "PlayersSeeTip": "What the players see. Use this when someone hides how they feel.",
+      "Same": "The same",
+      "PlayersSeeLine": "Players see: {attitude}",
+      "NoPerCharacter": ", and none of the per-character attitudes",
+      "Met": "Met",
+      "Announce": "Announce",
+      "AnnounceTip": "Post what the players see of this NPC to chat",
+      "TowardEach": "Toward each character:",
+      "SameToEveryone": "Same toward everyone",
+      "AsAbove": "As above",
+      "Toward": "{attitude} to {pc}",
+      "BlurbPlaceholder": "One line the players see: who they are, where the party met them",
+      "BlurbLabel": "One line the players see",
+      "Edit": "Edit",
+      "Group": "Group",
+      "GroupTip": "Players see the group",
+      "KnownAs": "Known as",
+      "KnownAsTip": "The name players see. Empty: the prototype token name.",
+      "Reveal": "Reveal name",
+      "RevealTip": "Show players the actor's real name",
+      "Portrait": "Portrait",
+      "PortraitFieldTip": "The image players see. Empty: the actor image; if that is art shipped with the system, a Paizo content or token module, or Foundry's own icons, the prototype token image instead; if that is shipped art too, a silhouette when the module's setting asks for one, else that art.",
+      "PickImage": "Pick an image",
+      "Archive": "Archive",
+      "ArchiveTip": "Out of the story for now: move to Archived, attitude and notes kept",
+      "BringBack": "Bring back",
+      "BringBackTip": "Bring them back into the lists",
+      "PortraitTip": "Open the sheet. Drag onto a group in the list, or use the Group menu under Edit.",
+      "SeePicture": "See the full picture",
+      "RealNameTip": "The actor's name, GM only"
+    },
+    "Scene": {
+      "Line": "For this scene: {list}",
+      "Party": "{attitude} toward the party",
+      "Toward": "{attitude} toward {pc}",
+      "Clear": "Clear",
+      "ClearTip": "Go back to the stored attitudes"
+    },
+    "History": {
+      "Label": "History",
+      "Entry": "{when}: {from} to {to}, toward {who}",
+      "Party": "the party",
+      "MetOn": "Met: {when}",
+      "Why": "Why the latest change",
+      "WhyPlaceholder": "A few words, if you like",
+      "RealTime": "Saved {real}"
+    },
+    "Notes": {
+      "Heading": "Party notes",
+      "Placeholder": "Add a note for the party",
+      "AddLabel": "Add a note about {name}",
+      "Add": "Add note",
+      "Remove": "Remove this note",
+      "Someone": "Someone",
+      "Party": "Party",
+      "NoGM": "A GM has to be logged in to save notes.",
+      "Refused": {
+        "long": "A note can be at most {len} characters.",
+        "count": "This person already has {max} notes, the most they hold. Remove some first.",
+        "chars": "This person's notes are full ({chars} characters in all). Remove some first.",
+        "fast": "One note at a time, please. Try again in a moment."
+      }
+    },
+    "Disposition": {
+      "Title": "Token disposition",
+      "One": "{name} has a token on this scene whose disposition isn't {label}. Set it to {label}?",
+      "Many": "{name} has {n} tokens on this scene whose disposition isn't {label}. Set them to {label}?"
+    },
+    "Announce": {
+      "Seems": "{name} seems {attitude} toward the party",
+      "HardToRead": "{name} is hard to read",
+      "Toward": "{attitude} to {pc}"
+    },
+    "Impression": {
+      "Title": "Make an Impression",
+      "Button": "Make an Impression",
+      "ButtonTip": "Roll the system's Make an Impression against this NPC's Will DC; the GM applies the result",
+      "Reminder": "After at least a minute of conversation, outside an encounter. The target has to hear and understand the character.",
+      "Who": "Who",
+      "Targets": "Targets (up to {n}; {penalty} with more than one)",
+      "Situation": "Situation modifier",
+      "SituationLabel": "Situation",
+      "SeveralLabel": "Several targets",
+      "Roll": "Roll",
+      "PickTarget": "Pick at least one target.",
+      "NotAllowed": "The GM hasn't let players Make an Impression from the People window.",
+      "NoAction": "The PF2e system's Make an Impression action wasn't found; this may need a module update.",
+      "NoCharacter": "There's no character to roll for.",
+      "GMOnly": "Make an Impression (GM only)",
+      "NoDC": "has no Will DC to roll against.",
+      "WillDC": "Will DC {dc}",
+      "NoChange": "no change",
+      "NotSetIndifferent": "Not set (counts as Indifferent)",
+      "Would": "{from} to {to} toward {pc}",
+      "ForScene": "For this scene",
+      "Lasting": "Lasting",
+      "Party": "the whole party",
+      "AppliedScene": "{attitude} for this scene",
+      "AppliedLasting": "{attitude}, lasting",
+      "Why": "Make an Impression by {pc}: {result}",
+      "AppliedElsewhere": "applied already (from this roll or its reroll)",
+      "LastingPreview": "lasting: {line}",
+      "ScenePreview": "for this scene: {line}",
+      "WouldParty": "{from} to {to} toward the party"
+    },
+    "MarkDialog": {
+      "Title": "Mark as met",
+      "PutOne": "Put them in",
+      "PutMany": "Put all {n} in",
+      "Keep": "their group as it is",
+      "None": "no group",
+      "Ok": "Mark as met"
+    },
+    "Notice": {
+      "SelectFirst": "Select one or more NPC tokens first.",
+      "SelectedGone": "The selected tokens' actors no longer exist in the sidebar.",
+      "Marked": "Marked {n} as met.",
+      "MarkedSkipped": "Marked {n} as met. Skipped {skipped} whose actor no longer exists.",
+      "Revealed": "Revealed the real names of {n}.",
+      "AnnounceOff": "Announcements are turned off in this module's settings.",
+      "Undone": "{user} changed the People record of {name}; it was put back. Only a GM changes these records."
+    },
+    "Hud": {
+      "Open": "People: open this NPC's card"
+    },
+    "Context": {
+      "Met": "People: met / not met"
+    },
+    "Keys": {
+      "Open": "Open the People window"
+    },
+    "Settings": {
+      "Announce": {
+        "Name": "Announce to",
+        "Hint": "Who the Announce button on a card posts to. Nothing is posted unless the GM presses it.",
+        "All": "Everyone",
+        "GM": "Whisper to the GM",
+        "Off": "Nobody (button disabled)"
+      },
+      "ImpressionPlayers": {
+        "Name": "Players can Make an Impression",
+        "Hint": "Players get a Make an Impression button on their own cards, rolling for a character they own. The GM still applies every result."
+      },
+      "StockPortrait": {
+        "Name": "When the only art is shipped art",
+        "Hint": "What players see for an NPC whose actor and token images are both art shipped with the system, a Paizo module or Foundry (which can give away what the creature is), until a portrait is set.",
+        "Token": "Show that art",
+        "Silhouette": "Show a silhouette"
+      },
+      "CastScopes": {
+        "Name": "Cast flag scopes",
+        "Hint": "Comma-separated module ids. An actor with flags.<id>.cast set counts as Cast for the Cast filter. The Cast chip shows only when this has an id."
+      }
+    }
+  }
+}

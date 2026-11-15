@@ -1,8 +1,8 @@
 {
   "id": "pf2e-npc-attitudes",
   "title": "PF2e NPC Attitudes",
-  "description": "<p>Tracks how the people the party has met feel about them. The GM sets each NPC's attitude, from Hostile to Helpful, and marks who the party has met. Players get a read-only People window with portraits, the name they know each NPC by, their attitude and shared party notes.</p>",
-  "version": "1.1.1",
+  "description": "<p>Tracks how the people the party has met feel about them. The GM sets each NPC's attitude, from Hostile to Helpful, marks who the party has met, sorts them into groups (a group can follow a Campaign Trackers reputation) and applies Make an Impression results. Players get a People window with portraits, the name they know each NPC by, their attitude and shared party notes.</p>",
+  "version": "2.0.0",
   "url": "https://github.com/Sir-Bayard/pf2e-npc-attitudes",
   "manifest": "https://github.com/Sir-Bayard/pf2e-npc-attitudes/releases/latest/download/module.json",
   "download": "https://github.com/Sir-Bayard/pf2e-npc-attitudes/releases/latest/download/module.zip",
@@ -27,8 +27,16 @@
         "id": "pf2e",
         "type": "system",
         "compatibility": {
-          "minimum": "8.0.0"
+          "minimum": "8.0.0",
+          "verified": "8.7.0"
         }
+      }
+    ],
+    "recommends": [
+      {
+        "id": "pf2e-campaign-trackers",
+        "type": "module",
+        "reason": "A group can follow one of its reputations, so the faction's tier sets the attitude of members without one of their own."
       }
     ]
   },
@@ -38,6 +46,24 @@
   "styles": [
     "styles/attitudes.css"
   ],
-  "socket": true,
-  "languages": []
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ],
+  "packs": [
+    {
+      "name": "people-macros",
+      "label": "People: macros",
+      "path": "packs/people-macros",
+      "type": "Macro",
+      "ownership": {
+        "PLAYER": "NONE",
+        "ASSISTANT": "OWNER"
+      }
+    }
+  ],
+  "socket": true
 }
